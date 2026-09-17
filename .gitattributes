@@ -1,0 +1,4 @@
+# Store all text files with LF line endings in the repository, regardless of
+# the operating system used by the client. This avoids CRLF/LF churn in diffs.
+* text=auto eol=lf
+
