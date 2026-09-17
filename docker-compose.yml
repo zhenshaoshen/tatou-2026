@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   server:
     build:
@@ -10,25 +8,23 @@ services:
     volumes:
       - user-files:/app/storage
       - ./keys:/app/keys:ro
-      - ./confidential:/app/confidential:ro      # ← new
-
+      - ./confidential:/app/confidential:ro
     environment:
       - PYTHONUNBUFFERED=1
-      # DB connection details for future use by the API
       - SECRET_KEY=${SECRET_KEY}
-      - RMAP_SERVER_PUB_PATH=/app/keys/server_pub.asc     # ← new
-      - RMAP_SERVER_PRIV_PATH=/app/keys/server_priv.asc   # ← new
-      - RMAP_CLIENTS_DIR=/app/keys/clients                # ← new
-      - RMAP_KEY_PASSPHRASE=${RMAP_KEY_PASSPHRASE}        # ← new
-      - WM_SECRET_KEY=${WM_SECRET_KEY}                    # ← new
+      - WM_SECRET_KEY=${WM_SECRET_KEY}
+      - RMAP_SERVER_PUB_PATH=/app/keys/server_pub.asc
+      - RMAP_SERVER_PRIV_PATH=/app/keys/server_priv.asc
+      - RMAP_CLIENTS_DIR=/app/keys/clients
+      - RMAP_KEY_PASSPHRASE=${RMAP_KEY_PASSPHRASE}
+      - RMAP_SOURCE_PDF=/app/confidential/Group_18.pdf
+      - RMAP_WM_METHOD=${RMAP_WM_METHOD}
       - DB_HOST=db
       - DB_PORT=3306
       - DB_NAME=tatou
       - DB_USER=${MARIADB_USER}
       - DB_PASSWORD=${MARIADB_PASSWORD}
       - FLAG_2=${FLAG_2}
-      - RMAP_SOURCE_PDF=/app/confidential/Group_18.pdf    # ← new
-      - RMAP_WM_METHOD=${RMAP_WM_METHOD}                  # ← new
     depends_on:
       db:
         condition: service_healthy
@@ -50,8 +46,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    ports:
-      - "3306:3306"
+    # No published port on purpose: MariaDB only needs to be reachable by the
+    # other containers on the compose network. Publishing 3306 exposed the
+    # database directly to every other group on the isolated course network.
     restart: unless-stopped
 
   phpmyadmin:
@@ -59,10 +56,12 @@ services:
     environment:
       - PMA_HOST=db
       - PMA_PORT=3306
-      - UPLOAD_LIMIT=64M     # <-- use a unit and quote if using YAML key:value form
+      - UPLOAD_LIMIT=64M
       - MEMORY_LIMIT=256M
+    # Bound to loopback only: reachable from the VM itself (e.g. through an SSH
+    # tunnel), never from another group's VM. phpMyAdmin is a high-value target.
     ports:
-      - "8080:80"
+      - "127.0.0.1:8080:80"
     depends_on:
       db:
         condition: service_healthy
