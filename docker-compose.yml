@@ -12,6 +12,7 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       # DB connection details for future use by the API
+      - SECRET_KEY=${SECRET_KEY}
       - DB_HOST=db
       - DB_PORT=3306
       - DB_NAME=tatou
