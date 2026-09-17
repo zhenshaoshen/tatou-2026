@@ -42,6 +42,7 @@ from watermarking_method import (
     load_pdf_bytes,
 )
 from add_after_eof import AddAfterEOF
+from redundant_multi_channel import RedundantMultiChannel
 
 # --------------------
 # Method registry
@@ -49,6 +50,7 @@ from add_after_eof import AddAfterEOF
 
 METHODS: Dict[str, WatermarkingMethod] = {
     AddAfterEOF.name: AddAfterEOF(),
+    RedundantMultiChannel.name: RedundantMultiChannel(),
 }
 """Registry of available watermarking methods.
 

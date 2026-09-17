@@ -99,8 +99,9 @@ def create_app():
 
     app.config["WM_SECRET_KEY"] = wm_secret_key
     app.config["RMAP_SOURCE_PDF"] = rmap_source_pdf
-    # Swapped for our own strongest method once it is implemented.
-    app.config["RMAP_WM_METHOD"] = os.environ.get("RMAP_WM_METHOD", "toy-eof")
+    # "rmc" (redundant multi-channel) is our strongest implemented method, so it
+    # is the default for RMAP retrievals.
+    app.config["RMAP_WM_METHOD"] = os.environ.get("RMAP_WM_METHOD", "rmc")
 
     # NOTE: RMAPServer keeps *mutable* per-handshake state (which nonceServer
     # belongs to which identity). It therefore must not be parked in
