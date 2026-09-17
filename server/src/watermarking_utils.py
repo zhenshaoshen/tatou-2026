@@ -27,6 +27,9 @@ To enable the richer exploration, install PyMuPDF:
 
 """
 from __future__ import annotations
+from add_after_eof import AddAfterEOF
+from redundant_multi_channel import RedundantMultiChannel
+from object_stream_secret import ObjectStreamSecret
 
 from typing import Any, Dict, Final, Iterable, List, Mapping
 import base64
@@ -41,9 +44,6 @@ from watermarking_method import (
     WatermarkingMethod,
     load_pdf_bytes,
 )
-from add_after_eof import AddAfterEOF
-from redundant_multi_channel import RedundantMultiChannel
-
 # --------------------
 # Method registry
 # --------------------
@@ -51,6 +51,7 @@ from redundant_multi_channel import RedundantMultiChannel
 METHODS: Dict[str, WatermarkingMethod] = {
     AddAfterEOF.name: AddAfterEOF(),
     RedundantMultiChannel.name: RedundantMultiChannel(),
+    ObjectStreamSecret.name: ObjectStreamSecret(),
 }
 """Registry of available watermarking methods.
 
