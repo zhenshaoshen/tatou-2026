@@ -97,6 +97,21 @@ def create_app():
             "Refusing to start."
         )
 
+    # Existence alone is not enough. A file with the right name but the wrong
+    # content would only surface as an unexplained 500 the first time another
+    # group calls us - so validate the magic bytes at start-up instead.
+    try:
+        with rmap_source_pdf.open("rb") as _fh:
+            _head = _fh.read(5)
+    except OSError as exc:
+        raise RuntimeError(f"RMAP_SOURCE_PDF cannot be read: {rmap_source_pdf} ({exc})")
+    if _head != b"%PDF-":
+        raise RuntimeError(
+            f"RMAP_SOURCE_PDF is not a PDF (missing the %PDF- header): {rmap_source_pdf}. "
+            "Check that the assigned confidential document was copied there and not "
+            "some other file with a similar name. Refusing to start."
+        )
+
     app.config["WM_SECRET_KEY"] = wm_secret_key
     app.config["RMAP_SOURCE_PDF"] = rmap_source_pdf
     # "rmc" (redundant multi-channel) is our strongest implemented method, so it
