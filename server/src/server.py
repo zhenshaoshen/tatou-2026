@@ -15,6 +15,9 @@ from sqlalchemy.exc import IntegrityError
 
 
 
+from rmap import RMAPServer, RMAPError
+from rmap.exceptions import PassphraseRequiredException, UnsupportedKeyException
+
 import watermarking_utils as WMUtils
 #from watermarking_utils import METHODS, apply_watermark, read_watermark, explore_pdf, is_watermarking_applicable, get_method
 
@@ -46,6 +49,81 @@ def create_app():
     app.config["DB_NAME"] = os.environ.get("DB_NAME", "tatou")
 
     app.config["STORAGE_DIR"].mkdir(parents=True, exist_ok=True)
+
+    # --- RMAP configuration (also fail closed: no keys => no service) ---
+    # The RMAP endpoints let other groups authenticate against this server and
+    # retrieve a watermarked copy of our confidential document. Without a
+    # usable key set the protocol simply cannot work, so a misconfigured
+    # deployment must fail loudly at start-up rather than silently at request
+    # time (same reasoning as SECRET_KEY above).
+    rmap_pub_path = Path(os.environ.get("RMAP_SERVER_PUB_PATH", "/app/keys/server_pub.asc"))
+    rmap_priv_path = Path(os.environ.get("RMAP_SERVER_PRIV_PATH", "/app/keys/server_priv.asc"))
+    rmap_clients_dir = Path(os.environ.get("RMAP_CLIENTS_DIR", "/app/keys/clients"))
+
+    for _name, _path in (
+        ("RMAP_SERVER_PUB_PATH", rmap_pub_path),
+        ("RMAP_SERVER_PRIV_PATH", rmap_priv_path),
+    ):
+        if not _path.is_file():
+            raise RuntimeError(
+                f"{_name} does not point to an existing file: {_path}. "
+                "Mount the key directory (docker compose) or set the path in .env. "
+                "Refusing to start."
+            )
+    if not rmap_clients_dir.is_dir():
+        raise RuntimeError(
+            f"RMAP_CLIENTS_DIR does not point to an existing directory: {rmap_clients_dir}. "
+            "Refusing to start."
+        )
+
+    # An empty value means "the private key is not passphrase protected".
+    rmap_passphrase = os.environ.get("RMAP_KEY_PASSPHRASE") or None
+
+    wm_secret_key = os.environ.get("WM_SECRET_KEY", "")
+    if len(wm_secret_key) < 32:
+        raise RuntimeError(
+            "WM_SECRET_KEY is missing or too short (<32 chars). Generate one with:  "
+            "python -c \"import secrets; print(secrets.token_urlsafe(32))\"  "
+            "and set it in .env / the environment. Refusing to start."
+        )
+
+    # The confidential document that other groups retrieve through RMAP. It is
+    # never served directly: every retrieval gets its own watermarked copy.
+    rmap_source_pdf = Path(os.environ.get("RMAP_SOURCE_PDF", "/app/confidential.pdf"))
+    if not rmap_source_pdf.is_file():
+        raise RuntimeError(
+            f"RMAP_SOURCE_PDF does not point to an existing file: {rmap_source_pdf}. "
+            "Mount the confidential document (docker compose) or set the path in .env. "
+            "Refusing to start."
+        )
+
+    app.config["WM_SECRET_KEY"] = wm_secret_key
+    app.config["RMAP_SOURCE_PDF"] = rmap_source_pdf
+    # Swapped for our own strongest method once it is implemented.
+    app.config["RMAP_WM_METHOD"] = os.environ.get("RMAP_WM_METHOD", "toy-eof")
+
+    # NOTE: RMAPServer keeps *mutable* per-handshake state (which nonceServer
+    # belongs to which identity). It therefore must not be parked in
+    # app.config - config holds static values, not live state - and it has to
+    # be created per application instance so that several create_app() calls
+    # (e.g. in tests) never share handshake state. A closure variable gives
+    # the route handlers below direct access to it.
+    rmap_server = RMAPServer(
+        server_public_key_path=rmap_pub_path,
+        server_private_key_path=rmap_priv_path,
+        passphrase=rmap_passphrase,
+        linkPrefix="",  # the API spec expects the bare 32-hex link
+        verbose=False,
+        logger=app.logger,
+    )
+    rmap_server.loadIdentities(rmap_clients_dir)
+    app.logger.info("RMAP initialised: %d client identities loaded", len(rmap_server.identities))
+
+    # Expose it on the app as well: Flask's `extensions` dict is the idiomatic
+    # home for third-party objects bound to an application (what Flask-SQLAlchemy
+    # does with app.extensions["sqlalchemy"]). The route handlers below use the
+    # closure variable, but tests and tools can reach the same instance here.
+    app.extensions["rmap"] = rmap_server
 
     # --- DB engine only (no Table metadata) ---
     def db_url() -> str:
@@ -448,29 +526,130 @@ def create_app():
                 raise RuntimeError(f"path {fp} escapes storage root {storage_root}")
         return fp
 
+    # --- RMAP helpers ---
+
+    def _rmap_document_id(conn, sha_hex: str, size: int) -> int:
+        """Return the Documents row for the confidential source PDF, creating it on first use.
+
+        Versions.documentid is a NOT NULL foreign key, so every watermarked copy
+        we hand out has to hang off a Documents row. The source document is
+        owned by a synthetic, unusable account ("tatou-rmap") so that no real
+        user can list, read or delete it.
+        """
+        source = app.config["RMAP_SOURCE_PDF"]
+        row = conn.execute(
+            text("SELECT id FROM Documents WHERE path = :p LIMIT 1"),
+            {"p": str(source)},
+        ).first()
+        if row:
+            return int(row.id)
+
+        owner = conn.execute(
+            text("SELECT id FROM Users WHERE login = :l LIMIT 1"),
+            {"l": "tatou-rmap"},
+        ).first()
+        if owner:
+            owner_id = int(owner.id)
+        else:
+            # "!" is not a valid password hash, so this account can never be
+            # logged into - it exists only as the owner of the source document.
+            res = conn.execute(
+                text("INSERT INTO Users (email, hpassword, login) VALUES (:e, :h, :l)"),
+                {"e": "rmap@tatou.local", "h": "!", "l": "tatou-rmap"},
+            )
+            owner_id = int(res.lastrowid)
+
+        res = conn.execute(
+            text("""
+                INSERT INTO Documents (name, path, ownerid, sha256, size)
+                VALUES (:name, :path, :ownerid, UNHEX(:sha256hex), :size)
+            """),
+            {
+                "name": source.name,
+                "path": str(source),
+                "ownerid": owner_id,
+                "sha256hex": sha_hex,
+                "size": int(size),
+            },
+        )
+        return int(res.lastrowid)
+
+    def _create_rmap_version(identity: str, link: str) -> None:
+        """Produce the watermarked copy for `identity` and record it in the database.
+
+        The specification is explicit: a link must never leave the server unless
+        the per-identity watermarked copy has actually been created and recorded.
+        """
+        source = app.config["RMAP_SOURCE_PDF"]
+        method = app.config["RMAP_WM_METHOD"]
+        key = app.config["WM_SECRET_KEY"]
+        # Includes the handshake link, so every retrieval is individually
+        # watermarked and a leaked copy can be traced to one specific handshake.
+        secret = f"{identity}:{link}"
+
+        wm_bytes = WMUtils.apply_watermark(
+            pdf=str(source), secret=secret, key=key, method=method, position=None
+        )
+        if not wm_bytes:
+            raise RuntimeError("watermarking produced no output")
+
+        dest_dir = app.config["STORAGE_DIR"] / "rmap" / secure_filename(identity)
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        dest_path = dest_dir / f"{link}.pdf"
+        dest_path.write_bytes(wm_bytes)
+
+        with get_engine().begin() as conn:
+            documentid = _rmap_document_id(
+                conn, sha_hex=_sha256_file(dest_path), size=dest_path.stat().st_size
+            )
+            conn.execute(
+                text("""
+                    INSERT INTO Versions (documentid, link, intended_for, secret, method, position, path)
+                    VALUES (:documentid, :link, :intended_for, :secret, :method, :position, :path)
+                """),
+                {
+                    "documentid": documentid,
+                    "link": link,
+                    "intended_for": identity,
+                    "secret": secret,
+                    "method": method,
+                    "position": "",
+                    "path": str(dest_path),
+                },
+            )
+
     # DELETE /api/delete-document  (and variants)
     @app.route("/api/delete-document", methods=["DELETE", "POST"])  # POST supported for convenience
-    @app.route("/api/delete-document/<document_id>", methods=["DELETE"])
+    @app.route("/api/delete-document/<int:document_id>", methods=["DELETE"])
+    @require_auth
     def delete_document(document_id: int | None = None):
         # accept id from path, query (?id= / ?documentid=), or JSON body on POST
-        if not document_id:
-            document_id = (
+        if document_id is None:
+            raw_id = (
                 request.args.get("id")
                 or request.args.get("documentid")
                 or (request.is_json and (request.get_json(silent=True) or {}).get("id"))
             )
-        try:
-            doc_id = document_id
-        except (TypeError, ValueError):
-            return jsonify({"error": "document id required"}), 400
+            try:
+                document_id = int(raw_id)
+            except (TypeError, ValueError):
+                return jsonify({"error": "document id required"}), 400
 
-        # Fetch the document (enforce ownership)
+        # Fetch the document, enforcing ownership
         try:
             with get_engine().connect() as conn:
-                query = "SELECT * FROM Documents WHERE id = " + doc_id
-                row = conn.execute(text(query)).first()
-        except Exception as e:
-            return jsonify({"error": f"database error: {str(e)}"}), 503
+                row = conn.execute(
+                    text("""
+                        SELECT id, path
+                        FROM Documents
+                        WHERE id = :id AND ownerid = :uid
+                        LIMIT 1
+                    """),
+                    {"id": document_id, "uid": int(g.user["id"])},
+                ).first()
+        except Exception:
+            app.logger.exception("delete_document: lookup failed")
+            return jsonify({"error": "database error"}), 503
 
         if not row:
             # Don’t reveal others’ docs—just say not found
@@ -480,40 +659,38 @@ def create_app():
         storage_root = Path(app.config["STORAGE_DIR"])
         file_deleted = False
         file_missing = False
-        delete_error = None
         try:
             fp = _safe_resolve_under_storage(row.path, storage_root)
             if fp.exists():
                 try:
                     fp.unlink()
                     file_deleted = True
-                except Exception as e:
-                    delete_error = f"failed to delete file: {e}"
-                    app.logger.warning("Failed to delete file %s for doc id=%s: %s", fp, row.id, e)
+                except Exception:
+                    app.logger.exception("delete_document: failed to delete file for doc id=%s", row.id)
             else:
                 file_missing = True
-        except RuntimeError as e:
+        except RuntimeError:
             # Path escapes storage root; refuse to touch the file
-            delete_error = str(e)
-            app.logger.error("Path safety check failed for doc id=%s: %s", row.id, e)
+            app.logger.error("delete_document: path safety check failed for doc id=%s", row.id)
 
-        # Delete DB row (will cascade to Version if FK has ON DELETE CASCADE)
+        # Delete DB row (cascades to Versions via ON DELETE CASCADE)
         try:
             with get_engine().begin() as conn:
-                # If your schema does NOT have ON DELETE CASCADE on Version.documentid,
-                # uncomment the next line first:
-                # conn.execute(text("DELETE FROM Version WHERE documentid = :id"), {"id": doc_id})
-                conn.execute(text("DELETE FROM Documents WHERE id = :id"), {"id": doc_id})
-        except Exception as e:
-            return jsonify({"error": f"database error during delete: {str(e)}"}), 503
+                conn.execute(
+                    text("DELETE FROM Documents WHERE id = :id AND ownerid = :uid"),
+                    {"id": document_id, "uid": int(g.user["id"])},
+                )
+        except Exception:
+            app.logger.exception("delete_document: delete failed")
+            return jsonify({"error": "database error during delete"}), 503
 
         return jsonify({
             "deleted": True,
-            "id": doc_id,
+            "id": document_id,
             "file_deleted": file_deleted,
             "file_missing": file_missing,
-            "note": delete_error,   # null/omitted if everything was fine
         }), 200
+
         
         
     # POST /api/create-watermark or /api/create-watermark/<id>  → create watermarked pdf and returns metadata
@@ -752,6 +929,66 @@ def create_app():
             "method": method,
             "position": position
         }), 201
+
+    # ------------------------------------------------------------------
+    # RMAP endpoints
+    #
+    # Other groups authenticate against this server with the RMAP protocol
+    # (a 4-message PGP handshake) and, in return, receive a link to a copy of
+    # our confidential document watermarked specifically for them. Neither
+    # endpoint uses a bearer token: the caller proves who it is through its
+    # ability to decrypt a value that only its private key could have produced.
+    # All protocol cryptography is handled by the `rmap` library; we only
+    # provide the HTTP shell, the error mapping and the watermarking.
+    # ------------------------------------------------------------------
+
+    # POST /api/rmap-initiate  →  RMAP message 1 in, response 1 out
+    @app.post("/api/rmap-initiate")
+    def rmap_initiate():
+        msg1 = request.get_json(silent=True)
+        try:
+            _identity, resp1 = rmap_server.receiveMsg1(msg1)
+        except (UnsupportedKeyException, PassphraseRequiredException):
+            # Our *own* key material is unusable. That is a server-side
+            # misconfiguration, not something the caller did wrong.
+            app.logger.exception("RMAP initiate: server key material is unusable")
+            return jsonify({"error": "server configuration error"}), 500
+        except RMAPError as exc:
+            # One generic answer for every client-side failure, on purpose.
+            # Reporting "unknown identity" separately from "cannot decrypt"
+            # would let an attacker enumerate which groups are known to us.
+            app.logger.warning("RMAP initiate rejected: %s", exc)
+            return jsonify({"error": "invalid request"}), 400
+        return jsonify(resp1), 200
+
+    # POST /api/rmap-get-link  →  RMAP message 2 in, response 2 (the link) out
+    @app.post("/api/rmap-get-link")
+    def rmap_get_link():
+        msg2 = request.get_json(silent=True)
+        try:
+            identity, expected_link, resp2 = rmap_server.receiveMsg2(msg2)
+        except (UnsupportedKeyException, PassphraseRequiredException):
+            app.logger.exception("RMAP get-link: server key material is unusable")
+            return jsonify({"error": "server configuration error"}), 500
+        except RMAPError as exc:
+            app.logger.warning("RMAP get-link rejected: %s", exc)
+            return jsonify({"error": "invalid request"}), 400
+        except Exception:
+            # The library promises RMAPError for protocol failures, but a
+            # decryptable body missing the expected key can still surface as
+            # KeyError/TypeError. Treat that as a bad request, not a 500.
+            app.logger.warning("RMAP get-link: unexpected payload", exc_info=True)
+            return jsonify({"error": "invalid request"}), 400
+
+        # A link must never be returned unless the watermarked copy exists and
+        # has been recorded, so this completes *before* we answer.
+        try:
+            _create_rmap_version(identity=identity, link=expected_link)
+        except Exception:
+            app.logger.exception("RMAP get-link: could not produce/record the watermarked copy")
+            return jsonify({"error": "server error"}), 500
+
+        return jsonify(resp2), 200
 
     return app
     

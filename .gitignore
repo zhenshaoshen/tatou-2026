@@ -205,3 +205,10 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+# RMAP keys — never commit private keys or the client key directory
+keys/
+*.asc
+
+confidential/

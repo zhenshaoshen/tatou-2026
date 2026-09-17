@@ -9,16 +9,26 @@ services:
       - "5000:5000"
     volumes:
       - user-files:/app/storage
+      - ./keys:/app/keys:ro
+      - ./confidential:/app/confidential:ro      # ← new
+
     environment:
       - PYTHONUNBUFFERED=1
       # DB connection details for future use by the API
       - SECRET_KEY=${SECRET_KEY}
+      - RMAP_SERVER_PUB_PATH=/app/keys/server_pub.asc     # ← new
+      - RMAP_SERVER_PRIV_PATH=/app/keys/server_priv.asc   # ← new
+      - RMAP_CLIENTS_DIR=/app/keys/clients                # ← new
+      - RMAP_KEY_PASSPHRASE=${RMAP_KEY_PASSPHRASE}        # ← new
+      - WM_SECRET_KEY=${WM_SECRET_KEY}                    # ← new
       - DB_HOST=db
       - DB_PORT=3306
       - DB_NAME=tatou
       - DB_USER=${MARIADB_USER}
       - DB_PASSWORD=${MARIADB_PASSWORD}
       - FLAG_2=${FLAG_2}
+      - RMAP_SOURCE_PDF=/app/confidential/Group_18.pdf    # ← new
+      - RMAP_WM_METHOD=${RMAP_WM_METHOD}                  # ← new
     depends_on:
       db:
         condition: service_healthy
