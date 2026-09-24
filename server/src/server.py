@@ -41,6 +41,9 @@ def create_app():
 
     app.config["STORAGE_DIR"] = Path(os.environ.get("STORAGE_DIR", "./storage")).resolve()
     app.config["TOKEN_TTL_SECONDS"] = int(os.environ.get("TOKEN_TTL_SECONDS", "86400"))
+    # Cap request bodies: without a limit an authenticated client can fill the
+    # disk, and the RMAP wire messages are only a few hundred bytes anyway.
+    app.config["MAX_CONTENT_LENGTH"] = int(os.environ.get("MAX_UPLOAD_BYTES", str(20 * 1024 * 1024)))
 
     app.config["DB_USER"] = os.environ.get("DB_USER", "tatou")
     app.config["DB_PASSWORD"] = os.environ.get("DB_PASSWORD", "tatou")
@@ -270,13 +273,26 @@ def create_app():
         if not file or file.filename == "":
             return jsonify({"error": "empty filename"}), 400
 
-        fname = file.filename
+        # The client-supplied name ends up in a filesystem path, so it must
+        # never be trusted as-is: "../../plugins/evil.pkl" would otherwise
+        # escape the user's directory. secure_filename strips directories and
+        # unsafe characters.
+        fname = secure_filename(file.filename)
+        if not fname:
+            return jsonify({"error": "invalid filename"}), 400
 
-        user_dir = app.config["STORAGE_DIR"] / "files" / g.user["login"]
+        # The API specification says only PDFs may be uploaded, so check the
+        # actual content instead of trusting the extension.
+        head = file.stream.read(5)
+        file.stream.seek(0)
+        if head != b"%PDF-":
+            return jsonify({"error": "only PDF files are accepted"}), 400
+
+        user_dir = app.config["STORAGE_DIR"] / "files" / secure_filename(g.user["login"])
         user_dir.mkdir(parents=True, exist_ok=True)
 
         ts = dt.datetime.utcnow().strftime("%Y%m%dT%H%M%S%fZ")
-        final_name = request.form.get("name") or fname
+        final_name = (request.form.get("name") or fname)[:255]
         stored_name = f"{ts}__{fname}"
         stored_path = user_dir / stored_name
         file.save(stored_path)
@@ -742,22 +758,26 @@ def create_app():
         if not method or not intended_for or not isinstance(secret, str) or not isinstance(key, str):
             return jsonify({"error": "method, intended_for, secret, and key are required"}), 400
 
-        # lookup the document; enforce ownership
+        # Look up the document, enforcing ownership: only the owner may create
+        # watermarked versions of their documents.
         try:
             with get_engine().connect() as conn:
                 row = conn.execute(
                     text("""
                         SELECT id, name, path
                         FROM Documents
-                        WHERE id = :id
+                        WHERE id = :id AND ownerid = :uid
                         LIMIT 1
                     """),
-                    {"id": doc_id},
+                    {"id": doc_id, "uid": int(g.user["id"])},
                 ).first()
-        except Exception as e:
-            return jsonify({"error": f"database error: {str(e)}"}), 503
+        except Exception:
+            app.logger.exception("create_watermark: document lookup failed")
+            return jsonify({"error": "database error"}), 503
 
         if not row:
+            # Same answer whether the document does not exist or belongs to
+            # somebody else - no document-enumeration oracle.
             return jsonify({"error": "document not found"}), 404
 
         # resolve path safely under STORAGE_DIR
@@ -900,19 +920,23 @@ def create_app():
         if not method or not isinstance(key, str):
             return jsonify({"error": "method, and key are required"}), 400
 
-        # lookup the document; FIXME enforce ownership
+        # Look up the document, enforcing ownership. Reading a watermark
+        # recovers the secret that identifies the recipient, so this must never
+        # work across accounts.
         try:
             with get_engine().connect() as conn:
                 row = conn.execute(
                     text("""
                         SELECT id, name, path
                         FROM Documents
-                        WHERE id = :id
+                        WHERE id = :id AND ownerid = :uid
+                        LIMIT 1
                     """),
-                    {"id": doc_id},
+                    {"id": doc_id, "uid": int(g.user["id"])},
                 ).first()
-        except Exception as e:
-            return jsonify({"error": f"database error: {str(e)}"}), 503
+        except Exception:
+            app.logger.exception("read_watermark: document lookup failed")
+            return jsonify({"error": "database error"}), 503
 
         if not row:
             return jsonify({"error": "document not found"}), 404
