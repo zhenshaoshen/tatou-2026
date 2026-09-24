@@ -15,6 +15,28 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]"
+      - name: Generate CI RMAP test keys
+        working-directory: server
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from rmap.keygen import generate_keypair
+
+          keys = Path("../keys")
+          clients = keys / "clients"
+          clients.mkdir(parents=True, exist_ok=True)
+
+          server = generate_keypair("CI Test Server", "ci-server@example.com")
+          client = generate_keypair("Group_01", "group01@example.com")
+
+          (keys / "server_priv.asc").write_text(str(server))
+          (keys / "server_pub.asc").write_text(str(server.pubkey))
+          (clients / "Group_01.asc").write_text(str(client.pubkey))
+          PY
+
+          mkdir -p ../confidential
+          printf '%%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF\n' \
+            > ../confidential/Group_18.pdf
       - name: Start integration environment
         env:
           MARIADB_ROOT_PASSWORD: ci-root-password
@@ -22,7 +44,6 @@ jobs:
           MARIADB_PASSWORD: ci-password
           SECRET_KEY: ci-secret-key-for-github-actions-1234567890
           WM_SECRET_KEY: ci-watermark-key-for-github-actions-1234567890
-          RMAP_KEY_PASSPHRASE: ci-rmap-passphrase-for-github-actions-1234567890
           RMAP_WM_METHOD: toy-eof
           FLAG_2: ci-flag
         run: docker compose up -d --build db server
@@ -61,8 +82,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install pip-audit
-        run: python -m pip install --upgrade pip pip-audit
+      - name: Install project and pip-audit
+        working-directory: server
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          python -m pip install pip-audit
       - name: Audit Python dependencies
         working-directory: server
-        run: pip-audit
+        run: python -m pip_audit
