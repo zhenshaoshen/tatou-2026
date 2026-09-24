@@ -16,6 +16,15 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]"
       - name: Start integration environment
+        env:
+          MARIADB_ROOT_PASSWORD: ci-root-password
+          MARIADB_USER: tatou
+          MARIADB_PASSWORD: ci-password
+          SECRET_KEY: ci-secret-key
+          WM_SECRET_KEY: ci-watermark-key
+          RMAP_KEY_PASSPHRASE: ci-rmap-passphrase
+          RMAP_WM_METHOD: toy-eof
+          FLAG_2: ci-flag
         run: docker compose up -d --build db server
 
       - name: Wait for server
