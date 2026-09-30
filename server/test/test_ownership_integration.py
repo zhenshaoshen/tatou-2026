@@ -1,11 +1,37 @@
 import json
+import os
 import time
 import urllib.error
 import urllib.request
 import uuid
 
+import pytest
+
 BASE_URL = "http://localhost:5000"
 PASSWORD = "SAMMTest123"
+
+# These tests drive the real HTTP API, so they need a running instance *and* its
+# database. When nothing is listening they are skipped instead of failing -
+# otherwise the whole suite goes red on any machine that has not started the
+# stack (a developer's laptop, for instance). CI, where the stack is started on
+# purpose, sets TATOU_REQUIRE_INTEGRATION=1 so a missing service is a hard
+# failure rather than a silent skip.
+pytestmark = pytest.mark.integration
+
+
+def _service_is_up() -> bool:
+    try:
+        with urllib.request.urlopen(BASE_URL + "/healthz", timeout=3) as response:
+            return response.status == 200
+    except Exception:
+        return False
+
+
+if not _service_is_up() and os.environ.get("TATOU_REQUIRE_INTEGRATION") != "1":
+    pytestmark = [
+        pytest.mark.integration,
+        pytest.mark.skip(reason=f"no Tatou instance reachable at {BASE_URL}"),
+    ]
 
 
 def _request(method, path, data=None, headers=None):

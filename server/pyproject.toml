@@ -21,6 +21,9 @@ dev = [
 addopts = "-q"
 testpaths = ["test/"]
 python_files = ["test_*.py"]
+markers = [
+    "integration: needs a running Tatou instance (server + database); skipped when unreachable unless TATOU_REQUIRE_INTEGRATION=1",
+]
 
 [project.scripts]
 pdfwm = "watermarking_cli:main"                 # now you can run `pdfwm methods`
