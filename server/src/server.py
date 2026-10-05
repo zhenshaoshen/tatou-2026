@@ -143,6 +143,8 @@ def create_app():
     # does with app.extensions["sqlalchemy"]). The route handlers below use the
     # closure variable, but tests and tools can reach the same instance here.
     app.extensions["rmap"] = rmap_server
+    import threading
+    rmap_lock = threading.Lock()  # RMAP session state is shared between threads
 
     # --- DB engine only (no Table metadata) ---
     def db_url() -> str:
@@ -987,7 +989,8 @@ def create_app():
     def rmap_initiate():
         msg1 = request.get_json(silent=True)
         try:
-            _identity, resp1 = rmap_server.receiveMsg1(msg1)
+            with rmap_lock:
+                _identity, resp1 = rmap_server.receiveMsg1(msg1)
         except (UnsupportedKeyException, PassphraseRequiredException):
             # Our *own* key material is unusable. That is a server-side
             # misconfiguration, not something the caller did wrong.
@@ -1006,7 +1009,14 @@ def create_app():
     def rmap_get_link():
         msg2 = request.get_json(silent=True)
         try:
-            identity, expected_link, resp2 = rmap_server.receiveMsg2(msg2)
+            with rmap_lock:
+                identity, expected_link, resp2 = rmap_server.receiveMsg2(msg2)
+                # One-shot session: invalidate it now so a replayed message 2
+                # is rejected up front (no second watermarking run, no overwrite).
+                _info = rmap_server.identities[identity]
+                rmap_server._nonce_server_index.pop(_info.nonceServer, None)
+                _info.nonceClient = None
+                _info.nonceServer = None
         except (UnsupportedKeyException, PassphraseRequiredException):
             app.logger.exception("RMAP get-link: server key material is unusable")
             return jsonify({"error": "server configuration error"}), 500
