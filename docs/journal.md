@@ -93,6 +93,7 @@ hand other groups a map of our remaining weaknesses. What landed in the reposito
 | 2026-09-25 | CI pipeline: unit tests + image build on every push | `d712b57` |
 | 2026-09-25 | Cross-user ownership regression test (integration, real database) | `287b664` |
 | 2026-09-25 | Dependency vulnerability audit in CI | `6ec4a69`, `da3e02b` |
+| 2026-10-05 | RMAP sessions are one-shot: a replayed message 2 now gets a clean 400 instead of a 500 after a repeated watermarking run; negative RMAP tests added (`scripts/rmap_negative.py`: unknown identity, wrong nonce, replay, sequential handshakes) | `2432649` |
 
 ### Hardening — reduction of exposed surface
 
@@ -101,6 +102,7 @@ hand other groups a map of our remaining weaknesses. What landed in the reposito
 | 2026-09-24 | MariaDB port 3306 no longer published; phpMyAdmin bound to `127.0.0.1` only | Both were reachable by every other group on the isolated network. The database needed no published port: the server reaches it over the compose network |
 | 2026-09-24 | Request body size capped at 20 MB | Prevents an authenticated client from filling the disk |
 | 2026-09-24 | `keys/`, `confidential/` and `.env` are git-ignored | Private key, assigned document and secrets must never enter version control |
+| 2026-10-05 | Gunicorn runs 1 worker with 8 threads, 60 s timeout and an access log (was: 1 sync worker, 30 s, no access log) | Worker timeouts were seen during testing; the cause is not proven (one RMAP run, including `rmc` watermarking, takes about 1.5 s). A single sync worker lets one stuck request block the whole service. We use threads, not workers, because RMAP session state lives in process memory. Commit `624e249` |
 
 ---
 
