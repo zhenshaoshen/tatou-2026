@@ -36,3 +36,4 @@
 ## Limits
 - One module only. The equivalence judgement is manual, and the `filetype` mutants depend on the PyMuPDF version.
 - The suite checks that the mark is found and valid. It does not test robustness against real de-watermarking tools (re-saving, rasterising, text extraction), which a mutation score cannot measure.
+- Mutants were run only against this module's own test file. The other suites (all-methods and API tests) were not included, so some survivors might be killed elsewhere.
