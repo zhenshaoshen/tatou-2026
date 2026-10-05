@@ -92,6 +92,11 @@ def test_survives_both_trailer_and_metadata_removal(method, sample_pdf, tmp_path
     assert method.read_secret(step2, key=KEY) == SECRET
 
 
+def test_non_string_key_is_rejected(method, sample_pdf):
+    with pytest.raises(ValueError, match="Key must be a non-empty string"):
+        method.add_watermark(sample_pdf, secret=SECRET, key=123)
+
+
 def test_wrong_key_is_rejected(method, sample_pdf, tmp_path):
     wm = _watermark(method, sample_pdf, tmp_path)
     with pytest.raises(InvalidKeyError):
@@ -101,6 +106,19 @@ def test_wrong_key_is_rejected(method, sample_pdf, tmp_path):
 def test_unwatermarked_pdf_reports_no_secret(method, sample_pdf):
     with pytest.raises(SecretNotFoundError):
         method.read_secret(sample_pdf, key=KEY)
+
+
+def test_malformed_non_dict_payload_is_rejected(method):
+    """A decoded watermark payload must have dictionary structure."""
+    import base64
+    import json
+
+    token = base64.urlsafe_b64encode(
+        json.dumps(["not", "a", "dict"]).encode()
+    ).decode()
+
+    with pytest.raises(SecretNotFoundError):
+        method._decode(token, KEY)
 
 
 def test_full_rewrite_loses_the_mark(method, sample_pdf, tmp_path):

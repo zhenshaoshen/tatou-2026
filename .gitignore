@@ -212,3 +212,7 @@ keys/
 *.asc
 
 confidential/
+.env.save*
+server/mutants/
+.mutmut-cache
+server/.mutmut-cache
