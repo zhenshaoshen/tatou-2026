@@ -16,5 +16,5 @@ fi
 
 # --- Start the server ---
 echo "Starting server..."
-exec gunicorn -b 0.0.0.0:5000 server:app
+exec gunicorn -b 0.0.0.0:5000 --worker-class gthread --workers 1 --threads 8 --timeout 60 --access-logfile - server:app
 
