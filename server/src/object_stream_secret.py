@@ -85,8 +85,14 @@ class ObjectStreamSecret(WatermarkingMethod):
         xref_table = f"xref\n{new_obj_num} 1\n{obj_offset:010d} 00000 n \n".encode("ascii")
 
         prev_clause = f" /Prev {prev_xref_offset}" if prev_xref_offset is not None else ""
+        # An incremental-update trailer must repeat /Root, otherwise readers
+        # that only look at the newest trailer find no catalog and no pages.
+        root_refs = re.findall(rb"/Root\s+(\d+)\s+(\d+)\s+R", data)
+        root_clause = (
+            f" /Root {root_refs[-1][0].decode()} {root_refs[-1][1].decode()} R" if root_refs else ""
+        )
         trailer = (
-            f"trailer\n<< /Size {new_obj_num + 1}{prev_clause} >>\n"
+            f"trailer\n<< /Size {new_obj_num + 1}{root_clause}{prev_clause} >>\n"
             f"startxref\n{xref_offset}\n%%EOF\n"
         ).encode("ascii")
 
@@ -104,8 +110,11 @@ class ObjectStreamSecret(WatermarkingMethod):
         if match is None:
             raise SecretNotFoundError("No Tatou watermark object found in PDF")
 
-        ciphertext = bytes.fromhex(match.group(1).decode("ascii"))
-        tag = bytes.fromhex(match.group(2).decode("ascii"))
+        try:
+            ciphertext = bytes.fromhex(match.group(1).decode("ascii"))
+            tag = bytes.fromhex(match.group(2).decode("ascii"))
+        except ValueError as exc:
+            raise SecretNotFoundError("Malformed Tatou watermark object") from exc
 
         if not hmac.compare_digest(tag, _mac(key, ciphertext)):
             raise InvalidKeyError("Provided key does not match watermark authentication tag")
