@@ -216,3 +216,5 @@ confidential/
 server/mutants/
 .mutmut-cache
 server/.mutmut-cache
+server/htmlcov/
+server/.coverage

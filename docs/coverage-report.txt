@@ -1,0 +1,25 @@
+.........s.....................................................          [100%]
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.15-final-0 _______________
+
+Name                             Stmts   Miss Branch BrPart  Cover   Missing
+----------------------------------------------------------------------------
+src/add_after_eof.py                70     14     18      9    74%   69, 85, 87, 98, 119, 123, 131, 136-137, 140, 142, 148-149, 153
+src/object_stream_secret.py         70     10     14      5    82%   50, 60-61, 66, 68, 98, 105, 111, 115-116
+src/redundant_multi_channel.py     106      0     36      0   100%
+src/server.py                      512    331     94      9    33%   71, 77, 87, 97, 109-110, 112, 179-182, 198, 202, 208-209, 217-242, 247-266, 273, 276, 284, 307-321, 332, 344-365, 375-405, 412-434, 443-495, 501-543, 547-561, 573-609, 617-639, 661-721, 736-869, 887-892, 900-968, 997-998, 1016-1019, 1021-1022, 1026-1041, 1050-1051
+src/watermarking_cli.py            126    126     26      0     0%   28-243
+src/watermarking_method.py          41      8      8      2    76%   104-108, 113, 158, 199, 233, 260
+src/watermarking_utils.py           80     52     10      1    32%   66, 78, 81-82, 99-100, 108-109, 114-115, 131, 159-241
+----------------------------------------------------------------------------
+TOTAL                             1005    541    206     26    45%
+Coverage HTML written to dir /app/htmlcov
+62 passed, 1 skipped in 1.90s
+
+NOTES (Group 18, 6 Oct 2026)
+- Measured with: pytest --cov=src --cov-branch (Python 3.12 container, 62 passed, 1 skipped).
+- server.py is low (33%) because its routes are tested against the live server, not in-process:
+  scripts/rmap_e2e.py, scripts/rmap_negative.py and the malformed-input checks. Coverage cannot see them.
+- The skipped test is the ownership integration test (needs a running instance).
+- redundant_multi_channel.py is at 100% lines and branches (result of the mutation testing work).
+- watermarking_cli.py (0%) is a command-line tool that the API does not use.
