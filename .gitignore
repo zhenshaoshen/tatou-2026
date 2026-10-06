@@ -218,3 +218,4 @@ server/mutants/
 server/.mutmut-cache
 server/htmlcov/
 server/.coverage
+collected/
