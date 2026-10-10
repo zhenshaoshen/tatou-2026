@@ -21,7 +21,7 @@
 1. **The redundancy was never tested.** The old tests found the mark only through the raw-bytes scan in `_collect`, so breaking the text-layer or metadata channel went unnoticed (13 survivors). New tests isolate each channel: text layer only, metadata only, a decoy trailer, and a mark on the first page only. The last one kills the mutant that used `found = ...` instead of `found += ...` and kept only the last page.
 2. **Error messages were not checked.** The old `match=` was a substring search, so a mutated message still matched. The new tests anchor messages with `^...$`.
 3. **Other gaps, now tested:** invisibility (pixel comparison), existing metadata kept, the MAC binds the secret, fallback to the trailer for zero-page and unparseable PDFs, newline handling, and `get_usage` and `is_watermark_applicable` (the 7 no-test mutants).
-4. **Dead code:** the final fallback in `read_secret` can never run, because `last_error` is always set once there are candidates (4 survivors). We documented it and left it.
+4. **Dead code:** the final fallback in `read_secret` can never run, because `last_error` is always set once there are candidates (5 survivors). We documented it and left it.
 5. **No production defect was found.** The result is a stronger test suite.
 
 ## The 31 remaining survivors

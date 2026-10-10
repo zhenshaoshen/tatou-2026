@@ -450,6 +450,8 @@ should decrypt to:
  * The server SHOULD only respond to known identities.
  * All submitted group public keys MUST constitute valid identities.
  * The payload is a gpg encrypted JSON presented as ASCII armored base64, without any GPG headers.
+ * Every client-side failure (missing or malformed payload, unknown identity) returns HTTP 400 with `{"error": "invalid request"}`, so the response does not reveal which identities are known.
+ * The library keeps one pending session per identity. A second message 1 from the same identity replaces the first, and the first handshake's message 2 is then rejected with 400.
  
   ## rmap-get-link
  
@@ -493,3 +495,6 @@ should decrypt to:
 
 **Specification**
  * `get-version/<result>` SHOULD point to a watermarked version of a PDF specific to the group authenticated by the public key of the client.
+ * The link MUST NOT be returned unless the watermarked copy has been created and recorded in the database.
+ * A session is single use: a replayed message 2 is rejected with HTTP 400 before any watermarking happens.
+ * A message 2 that does not match a pending session, and any malformed payload, returns HTTP 400 with `{"error": "invalid request"}`.

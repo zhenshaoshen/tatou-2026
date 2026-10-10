@@ -1,6 +1,6 @@
 # Tatou deployment & verification — Group 18
 
-**Audience:** the teammate who can reach the VM.
+**Audience:** whoever deploys Tatou on the VM.
 **Goal:** get the hardened server (with the two RMAP endpoints) running on the VM,
 and prove it actually works.
 
@@ -25,7 +25,7 @@ Directory layout expected by `docker-compose.yml`:
 tatou-2026/
 ├── .env
 ├── docker-compose.yml
-├── flag                      # flag 2 value (this file IS committed, by design)
+├── flag                      # flag 2 value (stays on the VM, git-ignored, never committed)
 ├── keys/
 │   ├── server_pub.asc
 │   ├── server_priv.asc
@@ -42,7 +42,7 @@ tatou-2026/
 
 ```bash
 cd ~/tatou-2026
-git pull                       # or: git fetch <bundle> && git merge
+git pull
 git log --oneline -3           # should show the RMAP + watermark commits
 ```
 
@@ -61,7 +61,7 @@ It must contain all of these:
 MARIADB_ROOT_PASSWORD=<random 32+ chars>
 MARIADB_USER=tatou
 MARIADB_PASSWORD=<random 32+ chars>
-FLAG_2=<flag 1 value from ILearn feedback>
+FLAG_2=<flag 1 value from ILearn feedback>   # the variable is called FLAG_2 but it fills /app/flag (flag 1)
 
 SECRET_KEY=<random 64 chars>
 WM_SECRET_KEY=<random 32+ chars>
@@ -76,7 +76,7 @@ Notes:
 - `RMAP_KEY_PASSPHRASE` must be the real passphrase; the server cannot decrypt RMAP messages without it.
 - `MARIADB_*` are only read when the database volume is created the first time. If the volume already exists, changing them has no effect unless you wipe the volume (`docker compose down -v`, **destroys data**).
 
-Also put the flag 2 value into the repo-root `flag` file and push it (that one is meant to be public).
+Also put the flag 2 value into the repo-root `flag` file on the VM. That file is git-ignored: do not commit or push it, the repository is public.
 
 ---
 
@@ -105,7 +105,7 @@ curl -s localhost:5000/healthz
 
 ```bash
 curl -s localhost:5000/api/get-watermarking-methods
-# must list both "toy-eof" and "rmc"
+# must list "toy-eof", "rmc", "obj-stream-secret" and "geo-text"
 
 curl -s -X POST localhost:5000/api/create-user \
   -H 'Content-Type: application/json' \
@@ -161,7 +161,7 @@ and a distinct `link` for every handshake.
 
 ```bash
 docker compose exec server cat /app/flag        # must show flag 1, not the placeholder
-cat flag                                        # flag 2 (committed on purpose)
+cat flag                                        # flag 2 (on the VM only, not committed)
 ```
 
 ---
@@ -169,8 +169,8 @@ cat flag                                        # flag 2 (committed on purpose)
 ## 5. Things to keep in mind
 
 - **Keep the service running.** Phase I expects as little downtime as possible. `restart: unless-stopped` is already set, so containers come back after a reboot.
-- **Do not add gunicorn workers.** The RMAP handshake keeps per-session state in memory, so a message 1 handled by one worker and message 2 by another would fail. The current CMD runs a single worker on purpose.
-- **Do not expose the database or phpMyAdmin.** Ports 3306 and 8080 are currently published in `docker-compose.yml`; that is scheduled to be removed, but until then other groups can reach them.
+- **Do not add gunicorn workers.** The RMAP handshake keeps per-session state in memory, so a message 1 handled by one worker and message 2 by another would fail. `entrypoint.sh` runs one Gunicorn worker with 8 threads on purpose (threads share the session state, extra workers would not).
+- **Do not expose the database or phpMyAdmin.** Port 3306 is not published (the server reaches the database over the compose network) and phpMyAdmin is bound to `127.0.0.1:8080` only. Keep it that way.
 - **Never commit** `keys/`, `confidential/` or `.env`. `git status` should stay clean after every command in this document.
 - If a flag is ever compromised, tell the whole group immediately — it has to be regenerated and disclosed on the course forum.
 
@@ -184,7 +184,7 @@ cat flag                                        # flag 2 (committed on purpose)
 | `RMAP_SERVER_PRIV_PATH does not point to an existing file` | `keys/server_priv.asc` missing, or the volume mount is wrong |
 | `RMAP_CLIENTS_DIR does not point to an existing directory` | `keys/clients/` missing or empty |
 | `RMAP_SOURCE_PDF does not point to an existing file` | `confidential/Group_18.pdf` missing |
-| `RMAP_SOURCE_PDF is not a PDF (missing the %PDF- header)` | the wrong file was copied there — check `sha256sum confidential/Group_18.pdf` against the value below |
+| `RMAP_SOURCE_PDF is not a PDF (missing the %PDF- header)` | the wrong file was copied there — check `sha256sum confidential/Group_18.pdf` against the value in section 0 |
 | `server configuration error` (HTTP 500) on `rmap-initiate` | wrong or missing `RMAP_KEY_PASSPHRASE` |
 | `invalid request` (HTTP 400) on `rmap-initiate` | the caller is not in `keys/clients/`; check the file name matches the identity exactly (e.g. `Group_07.asc` -> identity `Group_07`) |
 | `127.0.0.1:5000` refuses connections | `docker compose ps` — the server container is not running; check the logs |

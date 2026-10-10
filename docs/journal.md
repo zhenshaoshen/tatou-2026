@@ -88,21 +88,35 @@ hand other groups a map of our remaining weaknesses. What landed in the reposito
 | 2026-09-17 | RMAP endpoints implemented (`rmap-initiate`, `rmap-get-link`) | `2fdc34a` |
 | 2026-09-17 | Personal watermarking method `rmc` (redundant multi-channel) | `bbd2a79` |
 | 2026-09-17 | Second personal watermarking method `obj-stream-secret` | `cd0c1fd` |
-| 2026-09-24 | Stopped publishing the database and phpMyAdmin to the network; RMAP source PDF validated at start-up | `6315090` |
+| 2026-09-17 | Stopped publishing the database and phpMyAdmin to the network; RMAP source PDF validated at start-up | `6315090` |
 | 2026-09-24 | Ownership enforced in `create-watermark` / `read-watermark`; upload path and content hardened | `8a1ce37` |
-| 2026-09-25 | CI pipeline: unit tests + image build on every push | `d712b57` |
-| 2026-09-25 | Cross-user ownership regression test (integration, real database) | `287b664` |
-| 2026-09-25 | Dependency vulnerability audit in CI | `6ec4a69`, `da3e02b` |
-| 2026-10-05 | RMAP sessions are one-shot: a replayed message 2 now gets a clean 400 instead of a 500 after a repeated watermarking run; negative RMAP tests added (`scripts/rmap_negative.py`: unknown identity, wrong nonce, replay, sequential handshakes) | `2432649` |
+| 2026-09-24 | CI pipeline: unit tests + image build on every push | `d712b57` |
+| 2026-09-24 | Cross-user ownership regression test (integration, real database) | `287b664` |
+| 2026-09-24 | Dependency vulnerability audit in CI | `6ec4a69`, `da3e02b` |
 
 ### Hardening — reduction of exposed surface
 
 | Date | Change | Rationale |
 |---|---|---|
-| 2026-09-24 | MariaDB port 3306 no longer published; phpMyAdmin bound to `127.0.0.1` only | Both were reachable by every other group on the isolated network. The database needed no published port: the server reaches it over the compose network |
+| 2026-09-17 | MariaDB port 3306 no longer published; phpMyAdmin bound to `127.0.0.1` only | Both were reachable by every other group on the isolated network. The database needed no published port: the server reaches it over the compose network |
 | 2026-09-24 | Request body size capped at 20 MB | Prevents an authenticated client from filling the disk |
 | 2026-09-24 | `keys/`, `confidential/` and `.env` are git-ignored | Private key, assigned document and secrets must never enter version control |
-| 2026-10-05 | Gunicorn runs 1 worker with 8 threads, 60 s timeout and an access log (was: 1 sync worker, 30 s, no access log) | Worker timeouts were seen during testing; the cause is not proven (one RMAP run, including `rmc` watermarking, takes about 1.5 s). A single sync worker lets one stuck request block the whole service. We use threads, not workers, because RMAP session state lives in process memory. Commit `624e249` |
+
+---
+
+## Phase II: final delivery
+
+| Date | Change | Commit |
+|---|---|---|
+| 2026-10-05 | RMAP sessions are one-shot: a replayed message 2 now gets a clean 400 instead of a 500 after a repeated watermarking run; negative RMAP tests added (`scripts/rmap_negative.py`: unknown identity, wrong nonce, replay, sequential handshakes) | `2432649` |
+| 2026-10-05 | Gunicorn runs 1 worker with 8 threads, 60 s timeout and an access log (before: 1 sync worker, 30 s, no access log). Worker timeouts were seen during testing and the cause is not proven; one RMAP run, including `rmc` watermarking, takes about 1.5 s. Threads instead of workers because the RMAP session state lives in process memory | `624e249` |
+| 2026-10-05 / 06 | Mutation testing of `rmc` with mutmut: 227 of 258 mutants killed, report in `docs/mutation-testing-report.md` | `3691198`, `badf808`, `2ea23fc` |
+| 2026-10-06 | Coverage run (45% total) saved in `docs/coverage-report.txt` | `575dba5` |
+| 2026-10-06 | `obj-stream-secret`: 21 dedicated tests; two defects fixed (missing `/Root` in the incremental trailer, crash on odd-length hex) | `566a3c9` |
+| 2026-10-06 | RMAP client script to collect watermarked PDFs from other groups; `collected/` git-ignored | `0a23b77` |
+| 2026-10-07 | Third watermarking method `geo-text` merged | `7920c00`, `f280f4d` |
+| 2026-10-10 | De-watermarking tool (rebuild from rasterised pages) and its `--check` mode | `fb6edab`, `2577b7b` |
+| 2026-10-10 | Spec-to-test mapping added (`docs/spec-to-test-mapping.md`) | `2b7d928` |
 
 ---
 
@@ -113,7 +127,10 @@ hand other groups a map of our remaining weaknesses. What landed in the reposito
 
 | Date | Target / source | Operation | Result | Evidence |
 |---|---|---|---|---|
-| _pending_ | | | | |
+| 2026-10-06 | Groups 02, 10, 12, 16, 22, 34 | RMAP retrieval of their watermarked PDF (`scripts/rmap_collect.py`) | 6 copies collected, 7 other servers failed on their side (wrong key, no RMAP route, misconfiguration) | `rmap_collect.py` output |
+| 2026-10-10 | 14 reachable servers (groups 02, 04, 06, 08, 10, 12, 14, 16, 20, 22, 24, 30, 32, 34) | RMAP retrieval | 7 copies collected (02, 10, 12, 16, 22, 30, 34); 7 failed: 04 key mismatch, 06 no passphrase, 08 method not applicable, 14 and 20 no RMAP route (HTTP 405), 24 key lacks encryption subkey flag, 32 invalid initiation | `rmap_collect.py` output |
+| 2026-10-10 | Groups 10, 12, 22 | Rebuilt each PDF from rendered pages at 200 dpi (`scripts/dewatermark.py`), then emailed to the instructor | Structural check clean on all seven rebuilt files: no extractable text, no metadata, one `%%EOF`, nothing after it, no XMP. Whether the owners can still identify us is not known yet | `dewatermark.py --check` output |
+| 2026-10-06 | Incoming | RMAP retrievals by groups 02 and 16 recorded in the Versions table | Expected use of the endpoint | Versions table |
 
 <!--
 Recording template:
@@ -138,8 +155,9 @@ flags must be disclosed on the course forum and the flags regenerated.
 | Date | Flag | Checked how | Status |
 |---|---|---|---|
 | 2026-09-24 | flag 1 (container `/app/flag`) | `docker compose exec server cat /app/flag` on the VM | ✅ present, matches ILearn feedback |
-| 2026-09-24 | flag 2 (repo-root `flag`) | `cat flag` in the repository | ✅ present, committed |
-| — | flag 3 (Mr Important's PDF) | uploaded by the teacher at the end of Phase I | ⏳ pending |
+| 2026-09-24 | flag 2 (repo-root `flag`) | `cat flag` in the repository | ✅ present (committed to the public repo, see next row) |
+| 2026-10-10 | flags 1 and 2 | review of the repository | ⚠️ flag 2 value is in the public git history; `entrypoint.sh` printed the flag 1 value to the container logs until it was changed. Rotation pending |
+| — | flag 3 (Mr Important's PDF) | uploaded by the instructor at the end of Phase I | ✅ uploaded (presence not re-checked) |
 | — | any leak notification | course forum / course email | none so far |
 
 ---
@@ -155,9 +173,10 @@ flags must be disclosed on the course forum and the flags regenerated.
 
 ## Open items
 
-- [ ] Record the offensive operations once attacks start.
+- [x] Record the offensive operations (collection and de-watermarking, 10 Oct).
+- [ ] Rotate flags 1 and 2, stop tracking the repo-root `flag`, and note the rotation here.
+- [ ] Record the result of the re-identification attempts (until 17 Oct).
 - [ ] Re-check flags after any suspected intrusion; regenerate and disclose if leaked.
 - [ ] Complete the end-to-end ownership check (two accounts, cross-account access must
       return 404) on the VM after the next deploy.
-- [ ] Confirm both group members have implemented their own watermarking method
-      (individual responsibility) — done: `rmc` and `obj-stream-secret`.
+- [x] Each member has their own watermarking method: `rmc`, `obj-stream-secret` and `geo-text`.
