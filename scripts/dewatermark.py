@@ -1,6 +1,6 @@
-"""De-watermark a PDF by rebuilding it from rasterised pages.
+"""De-watermark a PDF by rebuilding the document, at three levels of aggressiveness.
 
-    python dewatermark.py <input.pdf> <output.pdf> [--dpi 200]
+    python dewatermark.py <input.pdf> <output.pdf> [--mode raster|strip|rewrite] [--dpi 200]
     python dewatermark.py --check <output.pdf> [<output.pdf> ...]
 
 Why rebuilding rather than editing
@@ -56,7 +56,17 @@ TOKENS = [
 ]
 
 
-def dewatermark(src: Path, dst: Path, dpi: int = 200) -> None:
+def dewatermark(src: Path, dst: Path, dpi: int = 200, mode: str = "raster") -> None:
+    """Three attempts, from most destructive to most faithful.
+
+    raster   rebuild from rendered pixels -- removes content, metadata, trailer
+             and revision marks, at the cost of the selectable text
+    rewrite  rebuild from extracted text -- removes content-level marks while
+             keeping text selectable, at the cost of the original layout
+    strip    rebuild the file structure but keep the page content -- removes
+             metadata, trailing bytes and revisions, and is expected to LEAVE
+             content-level marks behind (documented as a weaker attempt)
+    """
     doc = pymupdf.open(src)
     if doc.needs_pass:
         raise SystemExit(f"{src}: encrypted, cannot process")
@@ -65,10 +75,26 @@ def dewatermark(src: Path, dst: Path, dpi: int = 200) -> None:
 
     out = pymupdf.open()
     try:
-        for page in doc:
-            pix = page.get_pixmap(dpi=dpi, alpha=False)
-            new = out.new_page(width=page.rect.width, height=page.rect.height)
-            new.insert_image(new.rect, pixmap=pix)
+        if mode == "raster":
+            for page in doc:
+                pix = page.get_pixmap(dpi=dpi, alpha=False)
+                new = out.new_page(width=page.rect.width, height=page.rect.height)
+                new.insert_image(new.rect, pixmap=pix)
+        elif mode == "rewrite":
+            for page in doc:
+                new = out.new_page(width=page.rect.width, height=page.rect.height)
+                text = page.get_text().strip()
+                if text:
+                    box = pymupdf.Rect(new.rect.x0 + 28, new.rect.y0 + 28,
+                                       new.rect.x1 - 28, new.rect.y1 - 28)
+                    new.insert_textbox(box, text, fontsize=10, align=0)
+        elif mode == "strip":
+            # Keep the original page content (including any invisible text) but
+            # write a fresh single-revision file.
+            out.insert_pdf(doc)
+        else:
+            raise SystemExit(f"unknown mode: {mode}")
+
         out.set_metadata(
             {
                 "title": "",
@@ -92,7 +118,7 @@ def dewatermark(src: Path, dst: Path, dpi: int = 200) -> None:
 
     before = src.stat().st_size
     after = dst.stat().st_size
-    print(f"{src.name} -> {dst.name}: {before:,} -> {after:,} bytes, dpi={dpi}")
+    print(f"{src.name} -> {dst.name} [{mode}]: {before:,} -> {after:,} bytes" + (f", dpi={dpi}" if mode == "raster" else ""))
 
 
 def check(pdf: Path) -> bool:
@@ -105,9 +131,20 @@ def check(pdf: Path) -> bool:
     if text.strip():
         problems.append(f"extractable text remains ({len(text.strip())} chars)")
 
-    # Only the fields a caller can actually set are worth checking. PyMuPDF also
-    # reports read-only keys such as 'format' and 'encryption', which are always
-    # non-empty and are not metadata written by the producer.
+    # Scanning the raw bytes is not enough. Content streams are usually deflated,
+    # so a mark that was copied verbatim into the text layer is invisible to a
+    # byte scan while being plainly readable to anyone who runs get_text().
+    # This is the failure mode the assignment warns about: a mark the reader
+    # cannot find is not necessarily gone.
+    low = text.lower()
+    for token in TOKENS:
+        name = token.decode("utf-8", "ignore")
+        if name.lower() in low:
+            problems.append(f"token {name!r} appears in the extractable text")
+    blob = re.search(r"[A-Za-z0-9+/=_-]{60,}", text)
+    if blob:
+        problems.append(f"long encoded blob in the text: {blob.group(0)[:44]}...")
+
     settable = ("title", "author", "subject", "keywords", "creator", "producer",
                 "creationDate", "modDate")
     meta = {k: v for k, v in (doc.metadata or {}).items() if k in settable and v}
@@ -148,6 +185,9 @@ def main() -> int:
     ap.add_argument("src", nargs="?", help="input PDF (omit with --check)")
     ap.add_argument("dst", nargs="?", help="output PDF")
     ap.add_argument("--dpi", type=int, default=200)
+    ap.add_argument("--mode", choices=("raster", "strip", "rewrite"), default="raster",
+                    help="raster: rebuild from pixels; rewrite: rebuild from extracted "
+                         "text; strip: rebuild the file but keep the page content")
     ap.add_argument("--check", nargs="+", metavar="PDF")
     args = ap.parse_args()
 
@@ -156,7 +196,7 @@ def main() -> int:
 
     if not args.src or not args.dst:
         ap.error("need <input.pdf> <output.pdf>, or --check <pdf> ...")
-    dewatermark(Path(args.src), Path(args.dst), dpi=args.dpi)
+    dewatermark(Path(args.src), Path(args.dst), dpi=args.dpi, mode=args.mode)
     return 0
 
 
