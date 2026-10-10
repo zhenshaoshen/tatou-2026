@@ -157,7 +157,7 @@ flags must be disclosed on the course forum and the flags regenerated.
 | 2026-09-24 | flag 1 (container `/app/flag`) | `docker compose exec server cat /app/flag` on the VM | ✅ present, matches ILearn feedback |
 | 2026-09-24 | flag 2 (repo-root `flag`) | `cat flag` in the repository | ✅ present (committed to the public repo, see next row) |
 | 2026-10-10 | flags 1 and 2 | review of the repository | ⚠️ flag 2 value is in the public git history; `entrypoint.sh` printed the flag 1 value to the container logs until it was changed. Rotation pending |
-| — | flag 3 (Mr Important's PDF) | uploaded by the instructor at the end of Phase I | ✅ uploaded (presence not re-checked) |
+| — | flag 3 (Mr Important's PDF) | uploaded by the instructor at the end of Phase I | ✅ present (confirmed 10 Oct 2026) |
 | — | any leak notification | course forum / course email | none so far |
 
 ---

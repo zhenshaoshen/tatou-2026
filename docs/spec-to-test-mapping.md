@@ -1,8 +1,9 @@
 # Specification-to-test mapping (Group 18)
 
 Source of requirements: `server/API.md` (MUST/SHOULD statements) and the course
-specification (RMAP endpoints, watermarking methods). Status is based on the
-test files present at commit `2577b7b`; counts are `def test_` entries unless noted.
+specification (RMAP endpoints, watermarking methods). This is a living mapping of
+the tests and scripts documented below; individual coverage gaps are listed in
+each row. Test counts refer to `def test_` entries unless noted.
 
 How tests are run:
 - **Unit** = `cd server && python -m pytest` (uses the Flask test client or calls methods directly).

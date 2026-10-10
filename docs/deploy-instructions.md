@@ -25,7 +25,7 @@ Directory layout expected by `docker-compose.yml`:
 tatou-2026/
 ├── .env
 ├── docker-compose.yml
-├── flag                      # flag 2 value (stays on the VM, git-ignored, never committed)
+├── flag                      # local flag 2; a previous value was committed to public history; treat as exposed (see docs/journal.md)
 ├── keys/
 │   ├── server_pub.asc
 │   ├── server_priv.asc
