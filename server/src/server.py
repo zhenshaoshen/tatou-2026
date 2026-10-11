@@ -1,5 +1,8 @@
 import os
 import io
+import json
+import uuid
+import logging
 import hashlib
 import datetime as dt
 from pathlib import Path
@@ -20,6 +23,58 @@ from rmap.exceptions import PassphraseRequiredException, UnsupportedKeyException
 
 import watermarking_utils as WMUtils
 #from watermarking_utils import METHODS, apply_watermark, read_watermark, explore_pdf, is_watermarking_applicable, get_method
+
+
+# ----------------------------------------------------------------------
+# Operations log (Specialization D)
+#
+# Every security-relevant event is emitted as ONE JSON object per line on the
+# logger named "tatou.audit". Line-delimited JSON is deliberate: it stays
+# greppable with plain tools and is directly ingestible by the detection
+# script, without pulling a log stack into a single-VM course project.
+#
+# An "event" is always one of a small fixed set, so the detection rules can be
+# written against the event name instead of against free text. The set is
+# derived from the observation points OP-1..OP-5 in the threat model; nothing
+# is logged that the threat model did not ask for (in particular, RMAP failures
+# record the *class* of failure but never the identity, which would be an
+# enumeration oracle - see T-24).
+# ----------------------------------------------------------------------
+
+AUDIT_LOGGER = logging.getLogger("tatou.audit")
+
+
+def _audit(event: str, level: int = logging.WARNING, **fields) -> None:
+    """Emit one structured audit record.
+
+    `fields` are written verbatim into the JSON object, so callers should only
+    pass non-sensitive values: never a password, a token, a secret, a full
+    private path, or an RMAP identity on a failure path.
+    """
+    record = {
+        "ts": dt.datetime.now(dt.timezone.utc).isoformat(timespec="milliseconds"),
+        "event": event,
+        "request_id": getattr(g, "request_id", None),
+        "ip": _client_ip(),
+        "method": request.method if request else None,
+        "path": request.path if request else None,
+    }
+    record.update({k: v for k, v in fields.items() if v is not None})
+    AUDIT_LOGGER.log(level, json.dumps(record, ensure_ascii=True, sort_keys=True))
+
+
+def _client_ip() -> str | None:
+    """Best-effort client address.
+
+    We do not trust X-Forwarded-For: there is no reverse proxy in front of the
+    server, so a forged header would let an attacker choose which address the
+    log blames. The peer address is the only value that cannot be spoofed here.
+    """
+    try:
+        return request.remote_addr
+    except RuntimeError:  # outside a request context
+        return None
+
 
 def create_app():
     app = Flask(__name__)
@@ -52,6 +107,26 @@ def create_app():
     app.config["DB_NAME"] = os.environ.get("DB_NAME", "tatou")
 
     app.config["STORAGE_DIR"].mkdir(parents=True, exist_ok=True)
+
+    # --- Operations log -------------------------------------------------
+    # A dedicated audit logger whose records are single-line JSON objects.
+    # propagate=False keeps audit records out of the root logger, so raising
+    # this logger's level never changes how the rest of Flask logs, and tweaking
+    # Flask's logging never silently drops an audit record. This is what the
+    # detection script consumes (one event per line).
+    if not AUDIT_LOGGER.handlers:
+        _handler = logging.StreamHandler()
+        _handler.setFormatter(logging.Formatter("%(message)s"))
+        AUDIT_LOGGER.addHandler(_handler)
+        AUDIT_LOGGER.propagate = False
+        AUDIT_LOGGER.setLevel(logging.INFO)
+
+    @app.before_request
+    def _assign_request_id():
+        # A short id per request lets every line belonging to one request be
+        # correlated even though the access log and the audit log are separate
+        # streams. It is not a secret and never leaves the server.
+        g.request_id = uuid.uuid4().hex[:12]
 
     # --- RMAP configuration (also fail closed: no keys => no service) ---
     # The RMAP endpoints let other groups authenticate against this server and
@@ -172,15 +247,25 @@ def create_app():
         def wrapper(*args, **kwargs):
             auth = request.headers.get("Authorization", "")
             if not auth.startswith("Bearer "):
+                _audit("auth.failure", reason="missing_header")
                 return _auth_error("Missing or invalid Authorization header")
             token = auth.split(" ", 1)[1].strip()
             try:
                 data = _serializer().loads(token, max_age=app.config["TOKEN_TTL_SECONDS"])
             except SignatureExpired:
+                _audit("auth.failure", reason="expired")
                 return _auth_error("Token expired")
             except BadSignature:
+                # A token that does not verify. Could be a typo, could be an
+                # attempt to forge one after the signing key changed. We record
+                # the attempt and the source, never the token itself.
+                _audit("auth.failure", reason="bad_signature")
                 return _auth_error("Invalid token")
             g.user = {"id": int(data["uid"]), "login": data["login"], "email": data.get("email")}
+            # The signature verified, so `data` is trustworthy; recording the
+            # claimed uid is therefore safe and makes cross-account probing
+            # visible in the log.
+            g.audit_user = g.user["login"]
             return f(*args, **kwargs)
         return wrapper
 
@@ -260,8 +345,15 @@ def create_app():
             return jsonify({"error": f"database error: {str(e)}"}), 503
 
         if not row or not check_password_hash(row.hpassword, password):
+            # The password itself is never logged, and the supplied email is
+            # logged as given (not as stored) so that enumeration attempts are
+            # visible even when no such account exists. This is the only signal
+            # a password-spraying campaign leaves: see threat T-10 in the threat
+            # model. We deliberately do NOT log whether the account existed.
+            _audit("login.failure", email=email[:320])
             return jsonify({"error": "invalid credentials"}), 401
 
+        _audit("login.success", level=logging.INFO, uid=int(row.id), login=row.login)
         token = _serializer().dumps({"uid": int(row.id), "login": row.login, "email": row.email})
         return jsonify({"token": token, "token_type": "bearer", "expires_in": app.config["TOKEN_TTL_SECONDS"]}), 200
 
@@ -270,24 +362,38 @@ def create_app():
     @require_auth
     def upload_document():
         if "file" not in request.files:
+            _audit("upload.rejected", reason="no_file_part")
             return jsonify({"error": "file is required (multipart/form-data)"}), 400
         file = request.files["file"]
         if not file or file.filename == "":
+            _audit("upload.rejected", reason="empty_filename")
             return jsonify({"error": "empty filename"}), 400
 
         # The client-supplied name ends up in a filesystem path, so it must
         # never be trusted as-is: "../../plugins/evil.pkl" would otherwise
         # escape the user's directory. secure_filename strips directories and
         # unsafe characters.
+        raw_filename = file.filename
         fname = secure_filename(file.filename)
         if not fname:
+            # secure_filename returned nothing, which means the supplied name had
+            # no usable characters at all - a strong sign of a traversal or
+            # injection attempt rather than a mistake. Record the raw name.
+            _audit("upload.rejected", reason="path_traversal_or_unsafe_name",
+                   raw_filename=raw_filename[:255])
             return jsonify({"error": "invalid filename"}), 400
+        if fname != raw_filename:
+            # Documented, not blocked: normalisation changed the name, so an
+            # attempt to smuggle a path separator is visible in the log while
+            # the upload still proceeds with the safe name.
+            _audit("upload.normalised", raw_filename=raw_filename[:255], stored_as=fname[:255])
 
         # The API specification says only PDFs may be uploaded, so check the
         # actual content instead of trusting the extension.
         head = file.stream.read(5)
         file.stream.seek(0)
         if head != b"%PDF-":
+            _audit("upload.rejected", reason="not_a_pdf", raw_filename=raw_filename[:255])
             return jsonify({"error": "only PDF files are accepted"}), 400
 
         user_dir = app.config["STORAGE_DIR"] / "files" / secure_filename(g.user["login"])
@@ -718,6 +824,8 @@ def create_app():
             app.logger.exception("delete_document: delete failed")
             return jsonify({"error": "database error during delete"}), 503
 
+        _audit("document.deleted", level=logging.INFO, uid=int(g.user["id"]),
+               login=g.user["login"], documentid=document_id, file_deleted=file_deleted)
         return jsonify({
             "deleted": True,
             "id": document_id,
@@ -866,6 +974,9 @@ def create_app():
                 pass
             return jsonify({"error": f"database error during version insert: {e}"}), 503
 
+        _audit("watermark.created", level=logging.INFO, uid=int(g.user["id"]),
+               login=g.user["login"], documentid=doc_id, method=method,
+               intended_for=intended_for, version_id=vid)
         return jsonify({
             "id": vid,
             "documentid": doc_id,
@@ -876,7 +987,6 @@ def create_app():
             "filename": candidate,
             "size": len(wm_bytes),
         }), 201
-        
         
         
     
@@ -965,6 +1075,8 @@ def create_app():
             )
         except Exception as e:
             return jsonify({"error": f"Error when attempting to read watermark: {e}"}), 400
+        _audit("watermark.read", level=logging.INFO, uid=int(g.user["id"]),
+               login=g.user["login"], documentid=doc_id, method=method)
         return jsonify({
             "documentid": doc_id,
             "secret": secret,
@@ -1000,6 +1112,7 @@ def create_app():
             # One generic answer for every client-side failure, on purpose.
             # Reporting "unknown identity" separately from "cannot decrypt"
             # would let an attacker enumerate which groups are known to us.
+            _audit("rmap.initiate.rejected", reason="protocol_error")
             app.logger.warning("RMAP initiate rejected: %s", exc)
             return jsonify({"error": "invalid request"}), 400
         return jsonify(resp1), 200
@@ -1021,12 +1134,14 @@ def create_app():
             app.logger.exception("RMAP get-link: server key material is unusable")
             return jsonify({"error": "server configuration error"}), 500
         except RMAPError as exc:
+            _audit("rmap.getlink.rejected", reason="protocol_error")
             app.logger.warning("RMAP get-link rejected: %s", exc)
             return jsonify({"error": "invalid request"}), 400
         except Exception:
             # The library promises RMAPError for protocol failures, but a
             # decryptable body missing the expected key can still surface as
             # KeyError/TypeError. Treat that as a bad request, not a 500.
+            _audit("rmap.getlink.rejected", reason="unexpected_payload")
             app.logger.warning("RMAP get-link: unexpected payload", exc_info=True)
             return jsonify({"error": "invalid request"}), 400
 
