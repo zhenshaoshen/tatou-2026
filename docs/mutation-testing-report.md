@@ -1,39 +1,42 @@
-# Specialization B: Mutation testing (Group 18)
+# Specialization B: Mutation Testing (Group 18)
 
-## Why this target
-`server/src/redundant_multi_channel.py` is the `rmc` method. Our RMAP endpoint uses it to watermark the confidential PDF for every other group, and those groups try to remove the mark in the de-watermarking challenge. Its tests decide whether we can still attribute a leak, so we chose it over the rest of the code base. Only this module was mutated.
+## Target and tool
 
-## Method
-- Tool: mutmut 3.8.0 in a Python 3.12 container. Config: `server/setup.cfg`. Tests: `server/test/test_redundant_multi_channel.py`.
-- Expectation: coverage was already good, so we expected survivors in error handling and edge cases.
-- Reproduce: in `server/`, run `rm -rf mutants .mutmut-cache`, then `mutmut run`, then `mutmut results`.
+We used mutmut 3.8.0 to evaluate `server/src/redundant_multi_channel.py`, which embeds a watermark in a PDF's invisible text layer, metadata, and trailing bytes. We focused on this module because the tests need to verify that the watermark remains recoverable when one or more channels are removed.
+
+Configuration: `server/setup.cfg`
+Tests: `server/test/test_redundant_multi_channel.py`
 
 ## Results
-| | Start | After round 1 | Final |
-|---|---|---|---|
+
+| Measure | Initial | Round 1 | Final |
+|---|---:|---:|---:|
 | Tests | 9 | 24 | 28 |
-| Killed | 143 | 217 | 227 |
-| Survived | 108 | 34 | 31 |
-| No tests | 7 | 7 | 0 |
-| Score (killed / 258) | 55% | 84% | 88% |
+| Mutants killed | 143 | 217 | 227 |
+| Mutants survived | 108 | 34 | 31 |
+| Mutants with no tests | 7 | 7 | 0 |
+| Final mutation score | | | 88.0% |
 
-## What the survivors showed
-1. **The redundancy was never tested.** The old tests found the mark only through the raw-bytes scan in `_collect`, so breaking the text-layer or metadata channel went unnoticed (13 survivors). New tests isolate each channel: text layer only, metadata only, a decoy trailer, and a mark on the first page only. The last one kills the mutant that used `found = ...` instead of `found += ...` and kept only the last page.
-2. **Error messages were not checked.** The old `match=` was a substring search, so a mutated message still matched. The new tests anchor messages with `^...$`.
-3. **Other gaps, now tested:** invisibility (pixel comparison), existing metadata kept, the MAC binds the secret, fallback to the trailer for zero-page and unparseable PDFs, newline handling, and `get_usage` and `is_watermark_applicable` (the 7 no-test mutants).
-4. **Dead code:** the final fallback in `read_secret` can never run, because `last_error` is always set once there are candidates (5 survivors). We documented it and left it.
-5. **No production defect was found.** The result is a stronger test suite.
+The final run processed 258 mutants. The focused test suite passed all 28 tests.
 
-## The 31 remaining survivors
-| Category | Count |
-|---|---|
-| Equivalent: codec alias or never-used error handler ("UTF-8", "ASCII", "LATIN-1") | 12 |
-| Equivalent with the installed PyMuPDF: `filetype` argument | 8 |
-| Equivalent: `ensure_ascii` (payload is only hex and base64) | 3 |
-| Dead code in `read_secret` | 5 |
-| Cosmetic: position or size of invisible text | 3 |
+## What we learned
 
-## Limits
-- One module only. The equivalence judgement is manual, and the `filetype` mutants depend on the PyMuPDF version.
-- The suite checks that the mark is found and valid. It does not test robustness against real de-watermarking tools (re-saving, rasterising, text extraction), which a mutation score cannot measure.
-- Mutants were run only against this module's own test file. The other suites (all-methods and API tests) were not included, so some survivors might be killed elsewhere.
+The earlier tests did not adequately isolate all watermark channels. We added tests that check the text layer and metadata independently, remove the trailer or metadata, and verify recovery when only the text layer remains. We also strengthened checks for error messages, malformed payloads, MAC validation, PDF invisibility, and fallback behavior.
+
+Examples of surviving mutations included:
+- Changing the PDF text insertion point from `(2, 2)` to `(3, 2)`.
+- Changing the invisible text font size from `1` to `2`.
+- Changing codec names such as `utf-8` to `UTF-8`.
+- Changing the Latin-1 decoding error handler.
+
+These examples do not all indicate defects. Codec names are case-insensitive in Python, and Latin-1 can decode every byte value, so its error handler is not needed. Position and font-size changes may be equivalent for the properties our tests check. These cases show why survivors need investigation rather than being counted automatically as bugs.
+
+## Bugs, weaknesses, and fixes
+
+The main confirmed improvement was to the test suite: channel-isolation tests and stronger assertions now cover behaviors that were previously insufficiently checked. We also corrected the mutmut configuration so the tool can access sibling source modules while mutating only the target file.
+
+No confirmed production defect was established by this campaign. The remaining 31 survivors need to be judged by their actual behavior; some may be equivalent mutations or changes outside the tests' intended contract.
+
+## Limitations
+
+The final score is 227 killed mutants out of 258 (approximately 88.0%). This is useful evidence, but it does not prove that the implementation is defect-free. The campaign targeted one module and its dedicated tests, so other test suites may detect additional mutants. Equivalence judgments are based on the current code and runtime and should be revisited if dependencies change.
