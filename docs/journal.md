@@ -210,12 +210,3 @@ flags must be disclosed on the course forum and the flags regenerated.
   acceptable only because the data was disposable; for the final deployment, data
   retention would need a real backup path.
 
-## Open items
-
-- [x] Record the offensive operations (collection and de-watermarking, 10 Oct).
-- [ ] Rotate flags 1 and 2, stop tracking the repo-root `flag`, and note the rotation here.
-- [ ] Record the result of the re-identification attempts (until 17 Oct).
-- [ ] Re-check flags after any suspected intrusion; regenerate and disclose if leaked.
-- [ ] Complete the end-to-end ownership check (two accounts, cross-account access must
-      return 404) on the VM after the next deploy.
-- [x] Each member has their own watermarking method: `rmc`, `obj-stream-secret` and `geo-text`.
