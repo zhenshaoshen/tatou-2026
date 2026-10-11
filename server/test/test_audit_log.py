@@ -10,16 +10,30 @@ Each test is tied to the observation point (OP-1..OP-5) and the threat it
 covers; the class docstrings name them so the test file can be mapped back to
 the threat model directly.
 """
+import io
 import json
 import logging
 
 import pytest
+from itsdangerous import URLSafeTimedSerializer
 
 import server
 
 
 def _client():
     return server.app.test_client()
+
+
+def _token(uid=1, login="tester"):
+    """Mint a real bearer token, exactly as test_upload_document.py does.
+
+    The tests must drive the real authentication decorator, not bypass it: if
+    the token did not pass, the observation points behind the gate would never
+    run and the test would be asserting nothing. Signing a token against the
+    app's own key is the only honest way to get past the gate.
+    """
+    serializer = URLSafeTimedSerializer(server.app.config["SECRET_KEY"], salt="tatou-auth")
+    return serializer.dumps({"uid": uid, "login": login, "email": "tester@example.com"})
 
 
 def _events(caplog):
@@ -119,63 +133,67 @@ class TestLoginOutcome:
 # OP-3  Upload rejection -> T-06, T-07, T-15
 # ----------------------------------------------------------------------
 class TestUploadRejection:
-    def test_traversal_filename_is_logged(self, audit):
-        data = {"file": (__import__("io").BytesIO(b"%PDF-1.4\n"), "../../evil.pkl")}
+    def test_upload_without_a_token_stops_at_the_gate(self, audit):
+        """The gate runs before the handler, so an unauthenticated attempt is
+        recorded as an auth failure - not as an upload rejection. Documenting
+        the ordering here keeps the two observation points from being confused.
+        """
+        data = {"file": (io.BytesIO(b"%PDF-1.4\n"), "../../evil.pkl")}
         r = _client().post("/api/upload-document", data=data,
                            content_type="multipart/form-data")
-        # Auth runs first and this request carries no token, so it stops at the
-        # gate. The traversal case is therefore exercised through the gate test
-        # below, and this one documents the ordering explicitly.
         assert r.status_code == 401
-        assert "upload.rejected" not in _names(audit)
+        assert "upload.normalised" not in _names(audit)
+        assert "auth.failure" in _names(audit)
 
-    def test_traversal_is_logged_when_authenticated(self, audit, monkeypatch):
-        """With a valid token the upload handler runs and must log the attempt.
-
-        We stub the authentication decorator rather than minting a token, so the
-        test stays independent of the signing key and of the database.
-        """
-        import flask
-        # Patch the module-level serializer lookup by injecting a user directly.
-        original = server.app.view_functions["upload_document"]
-
-        def fake_view():
-            flask.g.user = {"id": 1, "login": "tester", "email": "t@e.st"}
-            flask.g.audit_user = "tester"
-            return original()
-
-        server.app.view_functions["upload_document"] = fake_view
-        try:
-            data = {"file": (__import__("io").BytesIO(b"%PDF-1.4\n"), "../../evil.pkl")}
-            _client().post("/api/upload-document", data=data,
-                           content_type="multipart/form-data")
-        finally:
-            server.app.view_functions["upload_document"] = original
+    def test_traversal_is_logged_when_authenticated(self, audit, tmp_path, monkeypatch):
+        """With a valid token the upload handler runs and must log the attempt."""
+        monkeypatch.setitem(server.app.config, "STORAGE_DIR", tmp_path)
+        data = {"file": (io.BytesIO(b"%PDF-1.4\n"), "../../evil.pkl")}
+        _client().post("/api/upload-document", data=data,
+                       content_type="multipart/form-data",
+                       headers={"Authorization": f"Bearer {_token()}"})
 
         events = [e for e in _events(audit) if e["event"] == "upload.normalised"]
         assert len(events) == 1
         assert events[0]["raw_filename"] == "../../evil.pkl"
+        # The sanitised name is recorded too, so the log shows what was kept.
+        assert ".." not in events[0]["stored_as"]
 
-    def test_non_pdf_upload_is_logged(self, audit):
-        original = server.app.view_functions["upload_document"]
-
-        def fake_view():
-            import flask
-            flask.g.user = {"id": 1, "login": "tester", "email": "t@e.st"}
-            return original()
-
-        server.app.view_functions["upload_document"] = fake_view
-        try:
-            data = {"file": (__import__("io").BytesIO(b"not a pdf at all"), "x.pdf")}
-            r = _client().post("/api/upload-document", data=data,
-                               content_type="multipart/form-data")
-        finally:
-            server.app.view_functions["upload_document"] = original
+    def test_non_pdf_upload_is_logged(self, audit, tmp_path, monkeypatch):
+        monkeypatch.setitem(server.app.config, "STORAGE_DIR", tmp_path)
+        data = {"file": (io.BytesIO(b"not a pdf at all"), "x.pdf")}
+        r = _client().post("/api/upload-document", data=data,
+                           content_type="multipart/form-data",
+                           headers={"Authorization": f"Bearer {_token()}"})
 
         assert r.status_code == 400
         events = [e for e in _events(audit) if e["event"] == "upload.rejected"]
         assert len(events) == 1
         assert events[0]["reason"] == "not_a_pdf"
+
+    def test_unsafe_name_that_sanitises_to_nothing_is_logged(self, audit, tmp_path, monkeypatch):
+        """A filename with no usable characters reduces to empty after
+        secure_filename, which is rejected and must be recorded."""
+        monkeypatch.setitem(server.app.config, "STORAGE_DIR", tmp_path)
+        data = {"file": (io.BytesIO(b"%PDF-1.4\n"), "../..")}
+        r = _client().post("/api/upload-document", data=data,
+                           content_type="multipart/form-data",
+                           headers={"Authorization": f"Bearer {_token()}"})
+
+        assert r.status_code == 400
+        events = [e for e in _events(audit) if e["event"] == "upload.rejected"]
+        assert len(events) == 1
+        assert events[0]["reason"] == "path_traversal_or_unsafe_name"
+
+    def test_authenticated_upload_is_not_logged_as_rejected(self, audit, tmp_path, monkeypatch):
+        """A clean upload must not create a rejection event, or the detection
+        rule would fire on normal use."""
+        monkeypatch.setitem(server.app.config, "STORAGE_DIR", tmp_path)
+        data = {"file": (io.BytesIO(b"%PDF-1.4\n1 0 obj\n<< >>\nendobj\n%%EOF\n"), "good.pdf")}
+        _client().post("/api/upload-document", data=data,
+                       content_type="multipart/form-data",
+                       headers={"Authorization": f"Bearer {_token()}"})
+        assert "upload.rejected" not in _names(audit)
 
 
 # ----------------------------------------------------------------------
