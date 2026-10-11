@@ -146,7 +146,7 @@ finding.
 | 2026-10-11 | our own deployment (`172.18.0.1`, via the published port) | 8 login attempts with wrong passwords, one address (threat T-10, password spraying) | detected: `[T-10] 5 failed logins ... in 19 ms (machine speed), 8 total` | `audit-drill.log`, `detect-drill.out` |
 | 2026-10-11 | our own deployment | forged bearer token against 8 endpoints (threat T-01, token forging / enumeration) | detected: `[T-01] 5 authentication failures`, and `burst of 5 auth failures across 5 paths in 29 ms` | same |
 | 2026-10-11 | our own deployment | 3 uploads with `../../evilN.pkl` filenames (threat T-06) | detected: `[T-06] 3 uploads ... had their filename rewritten by secure_filename`. Note the uploads **succeeded** under the rewritten name — the rule was reworded because of this | same |
-| 2026-10-11 | our own deployment | 1 upload of a non-PDF (threat T-07, content-check probing) | detected: `[T-07] refused uploads` | same |
+| 2026-10-11 | our own deployment | 1 upload of a non-PDF (content-check probing) | `upload.rejected` was logged; no T-07 finding appeared in the detector output | same |
 | 2026-10-11 | our own deployment | 6 malformed `rmap-initiate` bodies (threat T-22, RMAP abuse) | detected: `[T-22] 5 RMAP failures ... in 17 ms (machine speed), 6 total` | same |
 
 **Outcome:** 5 findings across 4 threat classes, from 24 audit events.
@@ -215,5 +215,5 @@ flags must be disclosed on the course forum and the flags regenerated.
 - [ ] Rotate flags 1 and 2 together (they hold the same value), stop tracking `server/flag`, and note the rotation here.
 - [ ] Record the result of the re-identification attempts (until 17 Oct).
 - [ ] Re-check flags after any suspected intrusion; regenerate and disclose if leaked.
-- [ ] Correct the T-07 row of the drill table: `audit-evidence/detect-drill.out` shows no T-07 finding.
+- [x] Corrected the defensive-drill row: `audit-evidence/detect-drill.out` records `upload.rejected` but shows no T-07 finding.
 - [ ] Move the `phase-ii` tag to the final commit.

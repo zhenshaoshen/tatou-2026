@@ -25,7 +25,6 @@ Directory layout expected by `docker-compose.yml`:
 tatou-2026/
 ├── .env
 ├── docker-compose.yml
-├── flag                      # local flag 2; a previous value was committed to public history; treat as exposed (see docs/journal.md)
 ├── keys/
 │   ├── server_pub.asc
 │   ├── server_priv.asc
@@ -67,7 +66,6 @@ SECRET_KEY=<random 64 chars>
 WM_SECRET_KEY=<random 32+ chars>
 RMAP_KEY_PASSPHRASE=<the passphrase of our private key>
 
-RMAP_SOURCE_PDF=../confidential/Group_18.pdf
 RMAP_WM_METHOD=rmc
 ```
 
@@ -76,7 +74,7 @@ Notes:
 - `RMAP_KEY_PASSPHRASE` must be the real passphrase; the server cannot decrypt RMAP messages without it.
 - `MARIADB_*` are only read when the database volume is created the first time. If the volume already exists, changing them has no effect unless you wipe the volume (`docker compose down -v`, **destroys data**).
 
-Also put the flag 2 value into the repo-root `flag` file on the VM. That file is git-ignored: do not commit or push it, the repository is public.
+The Dockerfile creates a non-secret placeholder at `/app/flag`; `server/entrypoint.sh` replaces it at container startup using `FLAG_2` from `.env`. A separate repository-root `flag` file is not required by this Docker build. Keep real flags out of Git and rotate any value that may have been exposed, following the course instructions.
 
 ---
 
@@ -160,8 +158,7 @@ and a distinct `link` for every handshake.
 ### 4.5 Flags in place
 
 ```bash
-docker compose exec server cat /app/flag        # must show flag 1, not the placeholder
-cat flag                                        # flag 2 (on the VM only, not committed)
+docker compose exec server sh -c 'if [ ! -f /app/flag ]; then echo "ERROR: /app/flag is missing"; exit 1; elif grep -q REPLACE_THIS_STRING_WITH_SERVER_FLAG /app/flag; then echo "ERROR: placeholder remains"; exit 1; else echo "Flag placeholder has been replaced"; fi'
 ```
 
 ---

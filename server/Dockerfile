@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir -e .
 
 # Copy sources after dependencies installation
 COPY src /app/src
-COPY flag /app/flag
+RUN printf '%s' 'REPLACE_THIS_STRING_WITH_SERVER_FLAG' > /app/flag
 COPY entrypoint.sh /app/entrypoint.sh
 RUN pip install --no-cache-dir -e .
 

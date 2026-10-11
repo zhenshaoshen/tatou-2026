@@ -49,13 +49,13 @@ Status: **Covered** (requirement checked by an automated test), **Partial** (che
 | all registered methods | `test_watermarking_all_methods.py`: applicability, add-watermark shape, round trip, parametrised over every method | Generic contract |
 | `rmc` (group RMAP method) | `test_redundant_multi_channel.py`, 28 tests; mutation tested (227 of 258 mutants killed, 88%); 100% line and branch coverage | See `docs/mutation-testing-report.md` |
 | `obj-stream-secret` | `test_object_stream_secret.py`, 18 test functions (21 cases with parametrisation) | Tested for classic xref tables only |
-| `geo-text` | `test_geometric_text_watermark.py`, 16 test functions | See issue below |
+| `geo-text` | `test_geometric_text_watermark.py`, 14 test functions | See issue below |
 | `toy-eof` | covered only by the generic suite | Reference method |
 
 ## 4. Issues found while building this table
 
-1. **Duplicate test name in `test_geometric_text_watermark.py`.** `test_secret_is_not_stored_as_plaintext` is defined twice (around lines 166 and 176). Python keeps only the second, so the first is silently dropped. The bodies are identical, so nothing is lost today, but it is a test-suite defect: delete one copy.
-2. **Most API routes have no automated test.** create-user, login, list-documents, list-versions, list-all-versions, get-document and get-watermarking-methods have none, and create/read-watermark and delete have only negative or authentication cases. `server.py` coverage is 33%.
+1. **Duplicate test definition fixed.** `test_secret_is_not_stored_as_plaintext` was defined twice in `test_geometric_text_watermark.py`. One duplicate has been removed, and the focused geometric-watermark and redundant-multi-channel tests passed after the change.
+2. **Most API routes have no automated test.** create-user, login, list-documents, list-versions, list-all-versions, get-document and get-watermarking-methods have none, and create/read-watermark and delete have only negative or authentication cases. `server.py` coverage was 41% in the recorded snapshot in `docs/coverage-report.txt` (commit `8655646`); this is historical, not a measurement of the current working tree.
 3. **Integration tests are skipped by default**, so the cross-user ownership check does not run in a plain `pytest`.
 
 ## 5. Planned additions (priority order)
@@ -64,4 +64,3 @@ Status: **Covered** (requirement checked by an automated test), **Partial** (che
 2. Happy-path and cross-user tests for list-documents, list-versions, list-all-versions and get-document.
 3. A test-client test for get-watermarking-methods that compares the route output with `METHODS`.
 4. Move the replay and distinct-link checks from `rmap_negative.py` into pytest.
-5. Remove the duplicate test in the geometric watermark suite.

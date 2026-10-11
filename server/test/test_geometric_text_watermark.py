@@ -5,7 +5,7 @@ from geometric_text_watermark import GeometricTextWatermark
 from watermarking_method import InvalidKeyError, SecretNotFoundError
 
 
-SECRET = "Group_18:codyprince668"
+SECRET = "test-only-secret-value"
 KEY = "unit-test-key"
 
 
@@ -161,16 +161,6 @@ def test_survives_clean_resave(method, sample_pdf, tmp_path):
     output.write_bytes(rewritten)
 
     assert method.read_secret(output, key=KEY) == SECRET
-
-
-def test_secret_is_not_stored_as_plaintext(method, sample_pdf):
-    watermarked = method.add_watermark(
-        sample_pdf,
-        secret=SECRET,
-        key=KEY,
-    )
-
-    assert SECRET.encode("utf-8") not in watermarked
 
 
 def test_secret_is_not_stored_as_plaintext(method, sample_pdf):
