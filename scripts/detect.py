@@ -30,16 +30,41 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 
 # --- thresholds -------------------------------------------------------
+#
+# These were tuned against a real drill on 2026-10-11, not guessed. The first
+# draft used 10 for AUTH_FAILURES_PER_IP and the drill did not trip it: eight
+# forged-token requests produced only five auth.failure events, because three of
+# the targeted routes answer 405 before the authentication gate is ever reached.
+# A threshold that a deliberate attack fails to cross is not conservative, it is
+# broken. Five is also what the login rule uses, and for the same reason - the
+# cost of a false positive here is a line in a log, not a blocked user.
 LOGIN_FAILURES_PER_IP = 5        # T-10: password spraying / brute force
 LOGIN_WINDOW = timedelta(minutes=5)
-AUTH_FAILURES_PER_IP = 10        # T-01: token forging or enumeration
+AUTH_FAILURES_PER_IP = 5         # T-01: token forging or enumeration
 AUTH_WINDOW = timedelta(minutes=5)
 UPLOAD_REJECTIONS_PER_IP = 3     # T-06/T-07: probing the upload path
 UPLOAD_WINDOW = timedelta(minutes=10)
 RMAP_FAILURES_PER_IP = 5         # T-22/T-25: protocol abuse or replay
 RMAP_WINDOW = timedelta(minutes=10)
 BURST_WINDOW = timedelta(seconds=30)  # many auth failures for many paths = scanning
-BURST_MIN_EVENTS = 8
+BURST_MIN_EVENTS = 5             # also lowered after the drill: see note above
+
+
+def human_span(span: timedelta) -> str:
+    """Format a duration the way an operator reads it.
+
+    The drill showed why this matters: five rejected logins arrived in
+    0.019 s. That number is the strongest evidence in the whole finding - no
+    human types that fast - and "0:00:00.019000" buries it.
+    """
+    seconds = span.total_seconds()
+    if seconds < 1:
+        return f"{seconds * 1000:.0f} ms (machine speed)"
+    if seconds < 60:
+        return f"{seconds:.1f} s"
+    if seconds < 3600:
+        return f"{seconds / 60:.1f} min"
+    return f"{seconds / 3600:.1f} h"
 
 
 def parse_ts(value: str) -> datetime:
@@ -121,7 +146,7 @@ def analyse(events: list[dict]) -> list[str]:
         events, lambda e: n(e, "login.failure"), "ip", LOGIN_FAILURES_PER_IP, LOGIN_WINDOW
     ):
         findings.append(
-            f"[T-10] {cnt} failed logins from {ip} within {span} "
+            f"[T-10] {cnt} failed logins from {ip} in {human_span(span)} "
             f"({first:%H:%M:%S}-{last:%H:%M:%S}), {total} total"
             f" - likely password spraying"
         )
@@ -131,18 +156,38 @@ def analyse(events: list[dict]) -> list[str]:
         events, lambda e: n(e, "auth.failure"), "ip", AUTH_FAILURES_PER_IP, AUTH_WINDOW
     ):
         findings.append(
-            f"[T-01] {cnt} authentication failures from {ip} within {span}, "
+            f"[T-01] {cnt} authentication failures from {ip} in {human_span(span)}, "
             f"{total} total - token forging or endpoint enumeration"
         )
 
     # T-06 / T-07 - someone is probing the upload validation.
+    #
+    # Two different things are worth watching, and the drill showed that
+    # conflating them produces a misleading sentence:
+    #
+    #   upload.rejected    the file was refused (not a PDF, no usable name)
+    #   upload.normalised  the file was ACCEPTED under a changed name, i.e. the
+    #                      sender supplied a path-shaped name and secure_filename
+    #                      defused it
+    #
+    # Reporting the second as "rejected uploads" would be wrong - the upload
+    # succeeded. It is still the strongest traversal signal we have, so it gets
+    # its own finding and its own wording.
     for ip, total, cnt, first, last, span in _windowed(
         events, lambda e: n(e, "upload.rejected"), "ip",
         UPLOAD_REJECTIONS_PER_IP, UPLOAD_WINDOW,
     ):
         findings.append(
-            f"[T-06] {cnt} rejected uploads from {ip} within {span}, {total} total"
-            f" - probing filename handling or the PDF check"
+            f"[T-07] {cnt} refused uploads from {ip} in {human_span(span)}, {total} total"
+            f" - probing the content check"
+        )
+    for ip, total, cnt, first, last, span in _windowed(
+        events, lambda e: n(e, "upload.normalised"), "ip",
+        UPLOAD_REJECTIONS_PER_IP, UPLOAD_WINDOW,
+    ):
+        findings.append(
+            f"[T-06] {cnt} uploads from {ip} in {human_span(span)} had their filename "
+            f"rewritten by secure_filename, {total} total - path-shaped names supplied"
         )
 
     # T-22 / T-25 - RMAP abuse.
@@ -151,7 +196,7 @@ def analyse(events: list[dict]) -> list[str]:
         "ip", RMAP_FAILURES_PER_IP, RMAP_WINDOW,
     ):
         findings.append(
-            f"[T-22] {cnt} RMAP failures from {ip} within {span}, {total} total"
+            f"[T-22] {cnt} RMAP failures from {ip} in {human_span(span)}, {total} total"
             f" - replay, identity probing, or forced watermarking runs"
         )
 
@@ -169,7 +214,8 @@ def analyse(events: list[dict]) -> list[str]:
                 if len(paths) >= 3:
                     findings.append(
                         f"[T-01] burst of {BURST_MIN_EVENTS} auth failures from {ip} "
-                        f"across {len(paths)} paths in {span} - automated scanning"
+                        f"across {len(paths)} paths in {human_span(span)}"
+                        f" - automated scanning"
                     )
                 break
 
