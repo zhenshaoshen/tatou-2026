@@ -1,0 +1,7 @@
+............................                                             [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/pgpy/constants.py:5
+  /home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/pgpy/constants.py:5: DeprecationWarning: imghdr was removed in Python 3.13. Please be aware that you are currently NOT using standard 'imghdr', but instead a separately installed 'standard-imghdr'.
+    import imghdr
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html

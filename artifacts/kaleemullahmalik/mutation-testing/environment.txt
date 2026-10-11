@@ -1,0 +1,25 @@
+Date: 2026-10-11T19:58:15+02:00
+Commit: 5ae9dd562506ecd82aa526be11c5fffd769c9a89
+Python:
+Python 3.13.5
+mutmut:
+Traceback (most recent call last):
+  File "/home/softsec/tatou-2026/server/.venv/bin/mutmut", line 3, in <module>
+    from mutmut.__main__ import cli
+  File "/home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/mutmut/__main__.py", line 77, in <module>
+    from mutmut.workers.isolation import MutantResult
+  File "/home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/mutmut/workers/isolation.py", line 52, in <module>
+    from mutmut.utils.safe_setproctitle import safe_setproctitle as setproctitle
+  File "/home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/mutmut/utils/safe_setproctitle.py", line 15, in <module>
+    if config().use_setproctitle:
+       ~~~~~~^^
+  File "/home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/mutmut/configuration.py", line 307, in config
+    _config = _load_config()
+  File "/home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/mutmut/configuration.py", line 145, in _load_config
+    source_paths = source_paths or paths_to_mutate or [Path(path) for path in _guess_source_paths()]
+                                                                              ~~~~~~~~~~~~~~~~~~~^^
+  File "/home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/mutmut/configuration.py", line 132, in _guess_source_paths
+    raise FileNotFoundError(
+    ...<2 lines>...
+    )
+FileNotFoundError: Could not figure out where the code to mutate is. Please specify it by adding "source_paths=code_dir" in setup.cfg to the [mutmut] section.
