@@ -132,6 +132,45 @@ hand other groups a map of our remaining weaknesses. What landed in the reposito
 | 2026-10-10 | Groups 10, 12, 22 | Rebuilt each PDF from rendered pages at 200 dpi (`scripts/dewatermark.py`), then emailed to the instructor | Structural check clean on all seven rebuilt files: no extractable text, no metadata, one `%%EOF`, nothing after it, no XMP. Whether the owners can still identify us is not known yet | `dewatermark.py --check` output |
 | 2026-10-06 | Incoming | RMAP retrievals by groups 02 and 16 recorded in the Versions table | Expected use of the endpoint | Versions table |
 
+### Defensive drill — operational security (Specialization D, 2026-10-11)
+
+Detection work only counts if it has been shown to fire. No other group had
+attacked us at the time, so we produced the traffic ourselves against our own
+deployment, through the published port, exactly as another group's requests would
+arrive. The requests are real and the log lines are real; the detector ran on
+them unmodified. This validates the detection capability — it does not invent a
+finding.
+
+| Date | Target / source | Operation | Result | Evidence |
+|---|---|---|---|---|
+| 2026-10-11 | our own deployment (`172.18.0.1`, via the published port) | 8 login attempts with wrong passwords, one address (threat T-10, password spraying) | detected: `[T-10] 5 failed logins ... in 19 ms (machine speed), 8 total` | `audit-drill.log`, `detect-drill.out` |
+| 2026-10-11 | our own deployment | forged bearer token against 8 endpoints (threat T-01, token forging / enumeration) | detected: `[T-01] 5 authentication failures`, and `burst of 5 auth failures across 5 paths in 29 ms` | same |
+| 2026-10-11 | our own deployment | 3 uploads with `../../evilN.pkl` filenames (threat T-06) | detected: `[T-06] 3 uploads ... had their filename rewritten by secure_filename`. Note the uploads **succeeded** under the rewritten name — the rule was reworded because of this | same |
+| 2026-10-11 | our own deployment | 1 upload of a non-PDF (threat T-07, content-check probing) | detected: `[T-07] refused uploads` | same |
+| 2026-10-11 | our own deployment | 6 malformed `rmap-initiate` bodies (threat T-22, RMAP abuse) | detected: `[T-22] 5 RMAP failures ... in 17 ms (machine speed), 6 total` | same |
+
+**Outcome:** 5 findings across 4 threat classes, from 24 audit events.
+
+**The part worth keeping:** two defects in the detector were found by this drill
+and by nothing earlier. The authentication-failure threshold was set to 10, and
+the drill — eight deliberate attempts — **did not trip it**, because three of the
+targeted routes answer 405 before the authentication gate is reached. And the T-06
+rule described `upload.normalised` as "rejected uploads" when the upload had in
+fact **succeeded** under a rewritten name.
+
+Both corrections are the same lesson as deployment incident 4: a control that has
+never been exercised is not a control, it is an intention. Incident 4 was a
+deployment lesson that was written down but not fed back; these were detection
+rules that were written but never fired. Same failure mode, different layer. See
+`specialization-d-report.md` §4.
+
+### Attempts detected against us
+
+| Date | Source | Operation | Result | Evidence |
+|---|---|---|---|---|
+| 2026-10-06 | Groups 02, 16 | RMAP retrieval of our watermarked copy — expected use, not an attack | served normally; both recorded in the Versions table with `intended_for` set | Versions table |
+| — | — | no hostile traffic detected so far | — | — |
+
 <!--
 Recording template:
 
