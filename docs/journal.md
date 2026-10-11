@@ -129,8 +129,8 @@ hand other groups a map of our remaining weaknesses. What landed in the reposito
 |---|---|---|---|---|
 | 2026-10-06 | Groups 02, 10, 12, 16, 22, 34 | RMAP retrieval of their watermarked PDF (`scripts/rmap_collect.py`) | 6 copies collected, 7 other servers failed on their side (wrong key, no RMAP route, misconfiguration) | `rmap_collect.py` output |
 | 2026-10-10 | 14 reachable servers (groups 02, 04, 06, 08, 10, 12, 14, 16, 20, 22, 24, 30, 32, 34) | RMAP retrieval | 7 copies collected (02, 10, 12, 16, 22, 30, 34); 7 failed: 04 key mismatch, 06 no passphrase, 08 method not applicable, 14 and 20 no RMAP route (HTTP 405), 24 key lacks encryption subkey flag, 32 invalid initiation | `rmap_collect.py` output |
-| 2026-10-10 | Groups 10, 12, 22 | Rebuilt each PDF from rendered pages at 200 dpi (`scripts/dewatermark.py`), then emailed to the instructor | Structural check clean on all seven rebuilt files: no extractable text, no metadata, one `%%EOF`, nothing after it, no XMP. Whether the owners can still identify us is not known yet | `dewatermark.py --check` output |
-| 2026-10-06 | Incoming | RMAP retrievals by groups 02 and 16 recorded in the Versions table | Expected use of the endpoint | Versions table |
+| 2026-10-10 | Groups 10, 12, 22 | Rebuilt each PDF from rendered pages at 200 dpi (`scripts/dewatermark.py`), then emailed to the instructor | Structural check clean on all three rebuilt files (re-checked on 2026-10-11 with the fixed checker): no extractable text, no metadata, one `%%EOF`, nothing after it, no XMP. Whether the owners can still identify us is not known yet | `dewatermark.py --check` output |
+| 2026-10-06 | Incoming | RMAP retrievals by groups 02, 09, 12, 16, 30 and 34 recorded in the Versions table (checked 2026-10-11) | Expected use of the endpoint | Versions table |
 
 ### Defensive drill — operational security (Specialization D, 2026-10-11)
 
@@ -168,7 +168,7 @@ rules that were written but never fired. Same failure mode, different layer. See
 
 | Date | Source | Operation | Result | Evidence |
 |---|---|---|---|---|
-| 2026-10-06 | Groups 02, 16 | RMAP retrieval of our watermarked copy — expected use, not an attack | served normally; both recorded in the Versions table with `intended_for` set | Versions table |
+| 2026-10-06 to 2026-10-11 | Groups 02, 09, 12, 16, 30, 34 | RMAP retrieval of our watermarked copy — expected use, not an attack | served normally; all recorded in the Versions table with `intended_for` set | Versions table |
 | — | — | no hostile traffic detected so far | — | — |
 
 <!--
@@ -210,3 +210,10 @@ flags must be disclosed on the course forum and the flags regenerated.
   acceptable only because the data was disposable; for the final deployment, data
   retention would need a real backup path.
 
+## Open items
+
+- [ ] Rotate flags 1 and 2 together (they hold the same value), stop tracking `server/flag`, and note the rotation here.
+- [ ] Record the result of the re-identification attempts (until 17 Oct).
+- [ ] Re-check flags after any suspected intrusion; regenerate and disclose if leaked.
+- [ ] Correct the T-07 row of the drill table: `audit-evidence/detect-drill.out` shows no T-07 finding.
+- [ ] Move the `phase-ii` tag to the final commit.
