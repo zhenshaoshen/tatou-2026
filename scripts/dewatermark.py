@@ -168,6 +168,18 @@ def check(pdf: Path) -> bool:
     hits = 0
     for token in TOKENS:
         for m in re.finditer(re.escape(token), raw):
+            # A rasterised PDF is mostly compressed image data, i.e. effectively
+            # random bytes, where a 3-byte token such as b"rmc" turns up by
+            # chance. Only trust a raw-byte hit when the token sits inside a
+            # readable run of bytes; report the rest as noise rather than
+            # hiding it (and never silently skip).
+            ctx = raw[max(0, m.start() - 32) : m.start() + len(token) + 32]
+            printable = sum(1 for c in ctx if 32 <= c < 127 or c in (9, 10, 13))
+            ratio = printable / max(1, len(ctx))
+            if len(token) < 5 and ratio < 0.9:
+                print(f"  note   {token.decode()!r} at offset {m.start()} ignored "
+                      f"(binary noise, printable context {ratio:.0%})")
+                continue
             print(f"  TOKEN  {token.decode()!r} at offset {m.start()}")
             hits += 1
     if hits:
@@ -192,7 +204,9 @@ def main() -> int:
     args = ap.parse_args()
 
     if args.check:
-        return 0 if all(check(Path(p)) for p in args.check) else 1
+        # Evaluate every file first: all() over a generator short-circuits on the
+        # first False and would leave the remaining files unchecked.
+        return 0 if all([check(Path(p)) for p in args.check]) else 1
 
     if not args.src or not args.dst:
         ap.error("need <input.pdf> <output.pdf>, or --check <pdf> ...")
