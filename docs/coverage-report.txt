@@ -1,5 +1,5 @@
-.............................................s.......................... [ 70%]
-.....................s...s...s                                           [100%]
+..............................................................s......... [ 60%]
+......................................s...s...s                          [100%]
 ================================ tests coverage ================================
 _______________ coverage: platform linux, python 3.12.15-final-0 _______________
 
@@ -9,25 +9,24 @@ src/add_after_eof.py                 70     14     18      9    74%   69, 85, 87
 src/geometric_text_watermark.py     179     28     48     15    81%   55, 70-71, 97, 100, 107-108, 112, 120, 146, 150-151, 157, 178, 189-190, 205, 210, 225, 230, 235, 262-263, 280-281, 302, 307, 330
 src/object_stream_secret.py          75      0     14      0   100%
 src/redundant_multi_channel.py      106      0     36      0   100%
-src/server.py                       512    331     94      9    33%   71, 77, 87, 97, 109-110, 112, 179-182, 198, 202, 208-209, 217-242, 247-266, 273, 276, 284, 307-321, 332, 344-365, 375-405, 412-434, 443-495, 501-543, 547-561, 573-609, 617-639, 661-721, 736-869, 887-892, 900-968, 997-998, 1016-1019, 1021-1022, 1026-1041, 1050-1051
+src/server.py                       553    318     98      9    41%   75-76, 146, 152, 162, 172, 184-185, 187, 256-257, 283, 287, 293-294, 307, 313-318, 323, 327, 340, 347-358, 365-366, 369-370, 413-427, 438, 450-471, 481-511, 518-540, 549-601, 607-649, 653-667, 679-715, 723-745, 767-829, 844-980, 997-1002, 1010-1080, 1109-1110, 1129-1132, 1134-1135, 1140-1156, 1165-1166
 src/watermarking_cli.py             126    126     26      0     0%   28-243
 src/watermarking_method.py           41      8      8      2    76%   104-108, 113, 158, 199, 233, 260
 src/watermarking_utils.py            81     52     10      1    33%   69, 81, 84-85, 103-104, 113-114, 119-120, 134, 162-244
 -----------------------------------------------------------------------------
-TOTAL                              1190    559    254     36    52%
-Coverage HTML written to dir /app/htmlcov
+TOTAL                              1231    546    258     36    54%
 =========================== short test summary info ============================
 SKIPPED [1] test/test_ownership_integration.py: no Tatou instance reachable at http://localhost:5000
 SKIPPED [1] test/test_watermarking_all_methods.py:61: geo-text: not applicable to the sample PDF
 SKIPPED [1] test/test_watermarking_all_methods.py:66: geo-text: not applicable to the sample PDF
 SKIPPED [1] test/test_watermarking_all_methods.py:76: geo-text: not applicable to the sample PDF
-98 passed, 4 skipped in 2.79s
+115 passed, 4 skipped in 2.82s
 
-NOTES (Group 18, 11 Oct 2026)
-- Measured with: pytest --cov=src --cov-branch (Python 3.12 container, 98 passed, 4 skipped), run on commit 7fbc912.
-- Total 52% (1190 statements, 559 missed, 254 branches, 36 partial). Earlier run on 6 Oct: 45%, 62 passed, 1 skipped.
-- redundant_multi_channel.py and object_stream_secret.py are both at 100% lines and branches (mutation testing work and dedicated tests).
-- server.py is low (33%) because its routes are tested against the live server, not in-process: scripts/rmap_e2e.py, scripts/rmap_negative.py and the malformed-input checks. Coverage cannot see them.
-- Skips: the ownership integration test (needs a running instance; the container cannot reach localhost:5000) and 3 geo-text tests in test_watermarking_all_methods.py (method not applicable to the sample PDF).
+NOTES (Group 18, 11 Oct 2026, 18:30)
+- Measured with: pytest --cov=src --cov-branch (Python 3.12 container), on commit 8655646: 115 passed, 4 skipped.
+- Total 54% (1231 statements, 546 missed, 258 branches, 36 partial). Earlier runs: 45% on 6 Oct, 52% earlier on 11 Oct.
+- redundant_multi_channel.py and object_stream_secret.py are at 100% lines and branches.
+- server.py is 41% (33% before the 17 audit-log tests of Specialization D). Most routes are still tested against the live server, which coverage cannot see: scripts/rmap_e2e.py, scripts/rmap_negative.py and the malformed-input checks.
+- Skips: the ownership integration test (needs a running instance; passes when run against the live server) and 3 geo-text tests in test_watermarking_all_methods.py (method not applicable to the sample PDF).
 - watermarking_cli.py (0%) is a command-line tool that the API does not use.
 - Coverage records that a line ran, not that a test checked the result; that is why rmc was also mutation tested.
