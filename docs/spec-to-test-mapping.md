@@ -49,7 +49,7 @@ Status: **Covered** (requirement checked by an automated test), **Partial** (che
 | all registered methods | `test_watermarking_all_methods.py`: applicability, add-watermark shape, round trip, parametrised over every method | Generic contract |
 | `rmc` (group RMAP method) | `test_redundant_multi_channel.py`, 28 tests; mutation tested (227 of 258 mutants killed, 88%); 100% line and branch coverage | See `docs/mutation-testing-report.md` |
 | `obj-stream-secret` | `test_object_stream_secret.py`, 18 test functions (21 cases with parametrisation) | Tested for classic xref tables only |
-| `geo-text` | `test_geometric_text_watermark.py`, 14 test functions | See issue below |
+| `geo-text` | `test_geometric_text_watermark.py`, 15 test functions | See issue below |
 | `toy-eof` | covered only by the generic suite | Reference method |
 
 ## 4. Issues found while building this table
