@@ -81,13 +81,16 @@ The last committed result is in `docs/coverage-report.txt`.
 
 ## Mutation testing
 
-Same container as above, then:
+The recorded campaign (`artifacts/kaleemullahmalik/mutation-testing/`) was run in a Python 3.13 virtual environment in `server/`, not in the 3.12 coverage container. From the repository root:
 
 ```bash
+cd server
+python3 -m venv .venv && . .venv/bin/activate
 pip install -q -e ".[dev]" mutmut
 rm -rf mutants .mutmut-cache
 mutmut run
-mutmut results
+mutmut results            # recorded: 258 mutants, 227 killed, 31 survived
+python -m pytest test/test_redundant_multi_channel.py -q   # 28 tests
 ```
 
 The configuration is in `server/setup.cfg` (target `src/redundant_multi_channel.py`).
