@@ -1,32 +1,95 @@
-..............................................................s......... [ 60%]
-......................................s...s...s                          [100%]
-================================ tests coverage ================================
-_______________ coverage: platform linux, python 3.12.15-final-0 _______________
+........................................................................ [ 59%]
+........................................s...s...s                        [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/pgpy/constants.py:5
+  /home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/pgpy/constants.py:5: DeprecationWarning: imghdr was removed in Python 3.13. Please be aware that you are currently NOT using standard 'imghdr', but instead a separately installed 'standard-imghdr'.
+    import imghdr
 
-Name                              Stmts   Miss Branch BrPart  Cover   Missing
------------------------------------------------------------------------------
-src/add_after_eof.py                 70     14     18      9    74%   69, 85, 87, 98, 119, 123, 131, 136-137, 140, 142, 148-149, 153
-src/geometric_text_watermark.py     179     28     48     15    81%   55, 70-71, 97, 100, 107-108, 112, 120, 146, 150-151, 157, 178, 189-190, 205, 210, 225, 230, 235, 262-263, 280-281, 302, 307, 330
+test/test_audit_log.py::TestUploadRejection::test_traversal_is_logged_when_authenticated
+test/test_audit_log.py::TestUploadRejection::test_authenticated_upload_is_not_logged_as_rejected
+test/test_upload_document.py::test_filename_traversal_cannot_escape_the_storage_root
+test/test_upload_document.py::test_sanitised_filename_keeps_the_expected_extension
+  /home/softsec/tatou-2026/server/src/server.py:403: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    ts = dt.datetime.utcnow().strftime("%Y%m%dT%H%M%S%fZ")
+
+test/test_rmap_get_link.py::test_message_2_without_a_matching_session_is_rejected
+test/test_rmap_get_link.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+test/test_rmap_initiate.py::test_unknown_identity_is_rejected
+test/test_rmap_initiate.py::test_errors_do_not_reveal_whether_the_identity_is_known
+test/test_rmap_initiate.py::test_known_identity_gets_a_usable_response_1
+test/test_rmap_initiate.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+  /home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/pgpy/constants.py:193: CryptographyDeprecationWarning: TripleDES has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.TripleDES and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 48.0.0.
+    SymmetricKeyAlgorithm.TripleDES: algorithms.TripleDES,
+
+test/test_rmap_get_link.py::test_message_2_without_a_matching_session_is_rejected
+test/test_rmap_get_link.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+test/test_rmap_initiate.py::test_unknown_identity_is_rejected
+test/test_rmap_initiate.py::test_errors_do_not_reveal_whether_the_identity_is_known
+test/test_rmap_initiate.py::test_known_identity_gets_a_usable_response_1
+test/test_rmap_initiate.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+  /home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/pgpy/constants.py:200: CryptographyDeprecationWarning: Camellia has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.Camellia and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 49.0.0.
+    SymmetricKeyAlgorithm.Camellia128: algorithms.Camellia,
+
+test/test_rmap_get_link.py::test_message_2_without_a_matching_session_is_rejected
+test/test_rmap_get_link.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+test/test_rmap_initiate.py::test_unknown_identity_is_rejected
+test/test_rmap_initiate.py::test_errors_do_not_reveal_whether_the_identity_is_known
+test/test_rmap_initiate.py::test_known_identity_gets_a_usable_response_1
+test/test_rmap_initiate.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+  /home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/pgpy/constants.py:201: CryptographyDeprecationWarning: Camellia has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.Camellia and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 49.0.0.
+    SymmetricKeyAlgorithm.Camellia192: algorithms.Camellia,
+
+test/test_rmap_get_link.py::test_message_2_without_a_matching_session_is_rejected
+test/test_rmap_get_link.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+test/test_rmap_initiate.py::test_unknown_identity_is_rejected
+test/test_rmap_initiate.py::test_errors_do_not_reveal_whether_the_identity_is_known
+test/test_rmap_initiate.py::test_known_identity_gets_a_usable_response_1
+test/test_rmap_initiate.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+  /home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/pgpy/constants.py:202: CryptographyDeprecationWarning: Camellia has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.Camellia and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 49.0.0.
+    SymmetricKeyAlgorithm.Camellia256: algorithms.Camellia}
+
+test/test_rmap_get_link.py::test_message_2_without_a_matching_session_is_rejected
+test/test_rmap_get_link.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+test/test_rmap_initiate.py::test_unknown_identity_is_rejected
+test/test_rmap_initiate.py::test_errors_do_not_reveal_whether_the_identity_is_known
+test/test_rmap_initiate.py::test_known_identity_gets_a_usable_response_1
+test/test_rmap_initiate.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+  /home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/pgpy/symenc.py:29: CryptographyDeprecationWarning: CFB has been moved to cryptography.hazmat.decrepit.ciphers.modes.CFB and will be removed from cryptography.hazmat.primitives.ciphers.modes in 49.0.0.
+    encryptor = Cipher(alg.cipher(key), modes.CFB(iv), default_backend()).encryptor()
+
+test/test_rmap_get_link.py::test_message_2_without_a_matching_session_is_rejected
+test/test_rmap_get_link.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+test/test_rmap_initiate.py::test_unknown_identity_is_rejected
+test/test_rmap_initiate.py::test_errors_do_not_reveal_whether_the_identity_is_known
+test/test_rmap_initiate.py::test_known_identity_gets_a_usable_response_1
+test/test_rmap_initiate.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+  /home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/pgpy/symenc.py:50: CryptographyDeprecationWarning: CFB has been moved to cryptography.hazmat.decrepit.ciphers.modes.CFB and will be removed from cryptography.hazmat.primitives.ciphers.modes in 49.0.0.
+    decryptor = Cipher(alg.cipher(key), modes.CFB(iv), default_backend()).decryptor()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.13.5-final-0 ________________
+
+Name                              Stmts   Miss Branch BrPart  Cover
+-------------------------------------------------------------------
+src/add_after_eof.py                 70     14     18      9    74%
+src/geometric_text_watermark.py     179     28     48     15    81%
 src/object_stream_secret.py          75      0     14      0   100%
 src/redundant_multi_channel.py      106      0     36      0   100%
-src/server.py                       553    318     98      9    41%   75-76, 146, 152, 162, 172, 184-185, 187, 256-257, 283, 287, 293-294, 307, 313-318, 323, 327, 340, 347-358, 365-366, 369-370, 413-427, 438, 450-471, 481-511, 518-540, 549-601, 607-649, 653-667, 679-715, 723-745, 767-829, 844-980, 997-1002, 1010-1080, 1109-1110, 1129-1132, 1134-1135, 1140-1156, 1165-1166
-src/watermarking_cli.py             126    126     26      0     0%   28-243
-src/watermarking_method.py           41      8      8      2    76%   104-108, 113, 158, 199, 233, 260
-src/watermarking_utils.py            81     52     10      1    33%   69, 81, 84-85, 103-104, 113-114, 119-120, 134, 162-244
------------------------------------------------------------------------------
-TOTAL                              1231    546    258     36    54%
-=========================== short test summary info ============================
-SKIPPED [1] test/test_ownership_integration.py: no Tatou instance reachable at http://localhost:5000
-SKIPPED [1] test/test_watermarking_all_methods.py:61: geo-text: not applicable to the sample PDF
-SKIPPED [1] test/test_watermarking_all_methods.py:66: geo-text: not applicable to the sample PDF
-SKIPPED [1] test/test_watermarking_all_methods.py:76: geo-text: not applicable to the sample PDF
-115 passed, 4 skipped in 2.82s
+src/server.py                       562    318    100      9    41%
+src/watermarking_cli.py             126    126     26      0     0%
+src/watermarking_method.py           41      8      8      2    76%
+src/watermarking_utils.py            81     52     10      1    33%
+-------------------------------------------------------------------
+TOTAL                              1240    546    260     36    55%
+118 passed, 3 skipped, 41 warnings in 2.71s
 
-NOTES (Group 18, 11 Oct 2026, 18:30)
-- Measured with: pytest --cov=src --cov-branch (Python 3.12 container), on commit 8655646: 115 passed, 4 skipped.
-- Total 54% (1231 statements, 546 missed, 258 branches, 36 partial). Earlier runs: 45% on 6 Oct, 52% earlier on 11 Oct.
-- redundant_multi_channel.py and object_stream_secret.py are at 100% lines and branches.
-- server.py is 41% (33% before the 17 audit-log tests of Specialization D). Most routes are still tested against the live server, which coverage cannot see: scripts/rmap_e2e.py, scripts/rmap_negative.py and the malformed-input checks.
-- Skips: the ownership integration test (needs a running instance; passes when run against the live server) and 3 geo-text tests in test_watermarking_all_methods.py (method not applicable to the sample PDF).
+NOTES (Group 18, 13 Oct 2026)
+- Measured with: pytest --cov=src --cov-branch, Python 3.13.5, on commit 6973797: 118 passed, 3 skipped.
+- Total coverage: 55% (1240 statements, 546 missed, 260 branches, 36 partial).
+- redundant_multi_channel.py and object_stream_secret.py remain at 100% coverage.
+- server.py remains at 41%. Most routes are still tested against the live server, which coverage cannot see: scripts/rmap_e2e.py, scripts/rmap_negative.py and malformed-input checks.
+- Skips: the ownership integration test requires a running Tatou instance; three geo-text tests are not applicable to the sample PDF.
 - watermarking_cli.py (0%) is a command-line tool that the API does not use.
-- Coverage records that a line ran, not that a test checked the result; that is why rmc was also mutation tested.
+- Coverage records execution, not whether a test checked the result; mutation testing provides complementary evidence.
+- Historical Python 3.12.15 results are preserved in docs/coverage-report-python-3.12.15.txt: 115 passed, 4 skipped, 54% coverage.

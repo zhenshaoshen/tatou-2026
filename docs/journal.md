@@ -112,6 +112,7 @@ hand other groups a map of our remaining weaknesses. What landed in the reposito
 | 2026-10-05 | Gunicorn runs 1 worker with 8 threads, 60 s timeout and an access log (before: 1 sync worker, 30 s, no access log). Worker timeouts were seen during testing and the cause is not proven; one RMAP run, including `rmc` watermarking, takes about 1.5 s. Threads instead of workers because the RMAP session state lives in process memory | `624e249` |
 | 2026-10-05 / 06 | Mutation testing of `rmc` with mutmut: 227 of 258 mutants killed, report in `docs/mutation-testing-report.md` | `3691198`, `badf808`, `2ea23fc` |
 | 2026-10-06 | Coverage run (45% total) saved in `docs/coverage-report.txt` | `575dba5` |
+| 2026-10-13 | Coverage rerun under Python 3.13.5: 118 passed, 3 skipped, 55% total; preserved Python 3.12.15 report | Working-tree evidence; report saved in docs/coverage-report.txt |
 | 2026-10-06 | `obj-stream-secret`: 21 dedicated tests; two defects fixed (missing `/Root` in the incremental trailer, crash on odd-length hex) | `566a3c9` |
 | 2026-10-06 | RMAP client script to collect watermarked PDFs from other groups; `collected/` git-ignored | `0a23b77` |
 | 2026-10-07 | Third watermarking method `geo-text` merged | `7920c00`, `f280f4d` |

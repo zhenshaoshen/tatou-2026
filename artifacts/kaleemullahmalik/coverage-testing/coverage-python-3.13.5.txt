@@ -1,0 +1,85 @@
+........................................................................ [ 59%]
+........................................s...s...s                        [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/pgpy/constants.py:5
+  /home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/pgpy/constants.py:5: DeprecationWarning: imghdr was removed in Python 3.13. Please be aware that you are currently NOT using standard 'imghdr', but instead a separately installed 'standard-imghdr'.
+    import imghdr
+
+test/test_audit_log.py::TestUploadRejection::test_traversal_is_logged_when_authenticated
+test/test_audit_log.py::TestUploadRejection::test_authenticated_upload_is_not_logged_as_rejected
+test/test_upload_document.py::test_filename_traversal_cannot_escape_the_storage_root
+test/test_upload_document.py::test_sanitised_filename_keeps_the_expected_extension
+  /home/softsec/tatou-2026/server/src/server.py:403: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    ts = dt.datetime.utcnow().strftime("%Y%m%dT%H%M%S%fZ")
+
+test/test_rmap_get_link.py::test_message_2_without_a_matching_session_is_rejected
+test/test_rmap_get_link.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+test/test_rmap_initiate.py::test_unknown_identity_is_rejected
+test/test_rmap_initiate.py::test_errors_do_not_reveal_whether_the_identity_is_known
+test/test_rmap_initiate.py::test_known_identity_gets_a_usable_response_1
+test/test_rmap_initiate.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+  /home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/pgpy/constants.py:193: CryptographyDeprecationWarning: TripleDES has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.TripleDES and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 48.0.0.
+    SymmetricKeyAlgorithm.TripleDES: algorithms.TripleDES,
+
+test/test_rmap_get_link.py::test_message_2_without_a_matching_session_is_rejected
+test/test_rmap_get_link.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+test/test_rmap_initiate.py::test_unknown_identity_is_rejected
+test/test_rmap_initiate.py::test_errors_do_not_reveal_whether_the_identity_is_known
+test/test_rmap_initiate.py::test_known_identity_gets_a_usable_response_1
+test/test_rmap_initiate.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+  /home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/pgpy/constants.py:200: CryptographyDeprecationWarning: Camellia has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.Camellia and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 49.0.0.
+    SymmetricKeyAlgorithm.Camellia128: algorithms.Camellia,
+
+test/test_rmap_get_link.py::test_message_2_without_a_matching_session_is_rejected
+test/test_rmap_get_link.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+test/test_rmap_initiate.py::test_unknown_identity_is_rejected
+test/test_rmap_initiate.py::test_errors_do_not_reveal_whether_the_identity_is_known
+test/test_rmap_initiate.py::test_known_identity_gets_a_usable_response_1
+test/test_rmap_initiate.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+  /home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/pgpy/constants.py:201: CryptographyDeprecationWarning: Camellia has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.Camellia and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 49.0.0.
+    SymmetricKeyAlgorithm.Camellia192: algorithms.Camellia,
+
+test/test_rmap_get_link.py::test_message_2_without_a_matching_session_is_rejected
+test/test_rmap_get_link.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+test/test_rmap_initiate.py::test_unknown_identity_is_rejected
+test/test_rmap_initiate.py::test_errors_do_not_reveal_whether_the_identity_is_known
+test/test_rmap_initiate.py::test_known_identity_gets_a_usable_response_1
+test/test_rmap_initiate.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+  /home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/pgpy/constants.py:202: CryptographyDeprecationWarning: Camellia has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.Camellia and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 49.0.0.
+    SymmetricKeyAlgorithm.Camellia256: algorithms.Camellia}
+
+test/test_rmap_get_link.py::test_message_2_without_a_matching_session_is_rejected
+test/test_rmap_get_link.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+test/test_rmap_initiate.py::test_unknown_identity_is_rejected
+test/test_rmap_initiate.py::test_errors_do_not_reveal_whether_the_identity_is_known
+test/test_rmap_initiate.py::test_known_identity_gets_a_usable_response_1
+test/test_rmap_initiate.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+  /home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/pgpy/symenc.py:29: CryptographyDeprecationWarning: CFB has been moved to cryptography.hazmat.decrepit.ciphers.modes.CFB and will be removed from cryptography.hazmat.primitives.ciphers.modes in 49.0.0.
+    encryptor = Cipher(alg.cipher(key), modes.CFB(iv), default_backend()).encryptor()
+
+test/test_rmap_get_link.py::test_message_2_without_a_matching_session_is_rejected
+test/test_rmap_get_link.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+test/test_rmap_initiate.py::test_unknown_identity_is_rejected
+test/test_rmap_initiate.py::test_errors_do_not_reveal_whether_the_identity_is_known
+test/test_rmap_initiate.py::test_known_identity_gets_a_usable_response_1
+test/test_rmap_initiate.py::test_valid_encryption_but_wrong_shape_is_a_clean_400
+  /home/softsec/tatou-2026/server/.venv/lib/python3.13/site-packages/pgpy/symenc.py:50: CryptographyDeprecationWarning: CFB has been moved to cryptography.hazmat.decrepit.ciphers.modes.CFB and will be removed from cryptography.hazmat.primitives.ciphers.modes in 49.0.0.
+    decryptor = Cipher(alg.cipher(key), modes.CFB(iv), default_backend()).decryptor()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.13.5-final-0 ________________
+
+Name                              Stmts   Miss Branch BrPart  Cover
+-------------------------------------------------------------------
+src/add_after_eof.py                 70     14     18      9    74%
+src/geometric_text_watermark.py     179     28     48     15    81%
+src/object_stream_secret.py          75      0     14      0   100%
+src/redundant_multi_channel.py      106      0     36      0   100%
+src/server.py                       562    318    100      9    41%
+src/watermarking_cli.py             126    126     26      0     0%
+src/watermarking_method.py           41      8      8      2    76%
+src/watermarking_utils.py            81     52     10      1    33%
+-------------------------------------------------------------------
+TOTAL                              1240    546    260     36    55%
+118 passed, 3 skipped, 41 warnings in 2.71s
