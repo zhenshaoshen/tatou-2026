@@ -67,10 +67,10 @@ docker compose exec server python /app/rmap_negative.py 2>&1 | grep -E "PASS|FAI
 
 ## Coverage
 
-Run in a Python 3.12 container from the repository root (the dependencies need Python 3.12 or older):
+Run in a Python 3.13 container from the repository root. The `standard-imghdr` compatibility dependency is installed automatically on Python 3.13 and newer.
 
 ```bash
-docker run --rm -it --network tatou-2026_default -v "$PWD/server:/app" -w /app python:3.12-slim bash
+docker run --rm -it --network tatou-2026_default -v "$PWD/server:/app" -w /app python:3.13-slim bash
 # inside the container:
 apt-get update -qq && apt-get install -y -qq git > /dev/null 2>&1
 pip install -q -e ".[dev]" pytest-cov
