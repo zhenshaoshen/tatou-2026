@@ -72,3 +72,26 @@ def test_known_identity_gets_a_usable_response_1():
     # which is what makes the (yet to come) msg2 step meaningful.
     rmap_server = server.app.extensions["rmap"]
     assert rmap_server.identities["Group_01"].nonceServer == nonce_server
+
+
+def test_valid_encryption_but_wrong_shape_is_a_clean_400():
+    """A message that decrypts fine but has missing or oddly typed fields.
+
+    rmap 2.0.0 still reads data["identity"] and data["nonceClient"] directly, so
+    these used to be able to surface as a 500.
+    """
+    from rmap.crypto import encrypt_json, load_key
+
+    server_pub = load_key(os.environ["RMAP_SERVER_PUB_PATH"])
+    bodies = [
+        {},
+        {"identity": "Group_01"},
+        {"nonceClient": 5},
+        {"identity": ["Group_01"], "nonceClient": 5},
+        {"identity": {"a": 1}, "nonceClient": 5},
+        [],
+    ]
+    for body in bodies:
+        r = _http().post("/api/rmap-initiate", json=encrypt_json(body, server_pub))
+        assert r.status_code == 400, body
+        assert r.get_json() == {"error": "invalid request"}, body

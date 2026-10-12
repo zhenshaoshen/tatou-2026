@@ -3,6 +3,7 @@ import io
 import json
 import uuid
 import logging
+import re
 import hashlib
 import datetime as dt
 from pathlib import Path
@@ -1115,6 +1116,13 @@ def create_app():
             _audit("rmap.initiate.rejected", reason="protocol_error")
             app.logger.warning("RMAP initiate rejected: %s", exc)
             return jsonify({"error": "invalid request"}), 400
+        except Exception:
+            # rmap 2.0.0 still indexes the decrypted JSON directly (data["identity"]),
+            # so a validly encrypted message with missing or oddly typed fields
+            # raises KeyError/TypeError instead of RMAPError. That is a bad request.
+            _audit("rmap.initiate.rejected", reason="unexpected_payload")
+            app.logger.warning("RMAP initiate: unexpected payload", exc_info=True)
+            return jsonify({"error": "invalid request"}), 400
         return jsonify(resp1), 200
 
     # POST /api/rmap-get-link  →  RMAP message 2 in, response 2 (the link) out
@@ -1143,6 +1151,15 @@ def create_app():
             # KeyError/TypeError. Treat that as a bad request, not a 500.
             _audit("rmap.getlink.rejected", reason="unexpected_payload")
             app.logger.warning("RMAP get-link: unexpected payload", exc_info=True)
+            return jsonify({"error": "invalid request"}), 400
+
+        # The spec says the link is exactly hex(nonceClient) || hex(nonceServer),
+        # 32 hex characters. A client can send an out-of-range nonceClient in
+        # message 1, which would give a different shape: refuse it here, before
+        # a file is written or a row is inserted.
+        if not re.fullmatch(r"[0-9a-f]{32}", expected_link):
+            _audit("rmap.getlink.rejected", reason="bad_link_format")
+            app.logger.warning("RMAP get-link: link is not 32 lowercase hex characters")
             return jsonify({"error": "invalid request"}), 400
 
         # A link must never be returned unless the watermarked copy exists and

@@ -63,3 +63,14 @@ def test_errors_do_not_reveal_internals():
     r_missing = _http().post("/api/rmap-get-link", json={})
     r_malformed = _http().post("/api/rmap-get-link", json={"payload": "not-valid-base64!!"})
     assert r_missing.get_json() == r_malformed.get_json() == {"error": "invalid request"}
+
+
+def test_valid_encryption_but_wrong_shape_is_a_clean_400():
+    """Decryptable message 2 without nonceServer, or with a non-number, is a 400."""
+    from rmap.crypto import encrypt_json, load_key
+
+    server_pub = load_key(os.environ["RMAP_SERVER_PUB_PATH"])
+    for body in ({}, {"nonceServer": "abc"}, {"nonceServer": [1]}, {"other": 1}, []):
+        r = _http().post("/api/rmap-get-link", json=encrypt_json(body, server_pub))
+        assert r.status_code == 400, body
+        assert r.get_json() == {"error": "invalid request"}, body
