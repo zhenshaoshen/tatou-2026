@@ -67,17 +67,20 @@ docker compose exec server python /app/rmap_negative.py 2>&1 | grep -E "PASS|FAI
 
 ## Coverage
 
-Run in a Python 3.13 container from the repository root. The `standard-imghdr` compatibility dependency is installed automatically on Python 3.13 and newer.
+The recorded coverage result was produced with Python 3.13.5 in the
+virtual environment under `server/.venv`, not inside Docker. To reproduce
+the run from the repository root:
 
 ```bash
-docker run --rm -it --network tatou-2026_default -v "$PWD/server:/app" -w /app python:3.13-slim bash
-# inside the container:
-apt-get update -qq && apt-get install -y -qq git > /dev/null 2>&1
-pip install -q -e ".[dev]" pytest-cov
-pytest --cov=src --cov-branch --cov-report=term-missing --cov-report=html:/app/htmlcov -p no:warnings
+cd server
+. .venv/bin/activate
+python -m pytest --cov=src --cov-branch 2>&1 | tee ../artifacts/kaleemullahmalik/coverage-testing/coverage-python-3.13.5.txt
 ```
 
-The last committed result is in `docs/coverage-report.txt`.
+The recorded summary is in `docs/coverage-report.txt`; the raw output is in
+`artifacts/kaleemullahmalik/coverage-testing/coverage-python-3.13.5.txt`.
+The separate Python 3.12.15 result is preserved in
+`docs/coverage-report-python-3.12.15.txt`.
 
 ## Mutation testing
 
