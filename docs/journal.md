@@ -117,7 +117,7 @@ hand other groups a map of our remaining weaknesses. What landed in the reposito
 | 2026-10-07 | Third watermarking method `geo-text` merged | `7920c00`, `f280f4d` |
 | 2026-10-10 | De-watermarking tool (rebuild from rasterised pages) and its `--check` mode | `fb6edab`, `2577b7b` |
 | 2026-10-10 | Spec-to-test mapping added (`docs/spec-to-test-mapping.md`) | `2b7d928` |
-| 2026-10-13 | Coverage rerun under Python 3.13.5: 118 passed, 3 skipped, 55% total; preserved Python 3.12.15 report | Working-tree evidence; report saved in docs/coverage-report.txt |
+| 2026-10-13 | Coverage rerun under Python 3.13.5: 118 passed, 3 skipped, 55% total; preserved Python 3.12.15 report | Committed evidence; report saved in docs/coverage-report.txt |
 | 2026-10-13 | Upgraded to the fixed RMAP library 2.0.0 after the instructor's announcement (wheel pinned in `server/pyproject.toml`; the rebuilt container reports 2.0.0). Library 2.0.0 still reads `data["identity"]` and `data["nonceClient"]` directly, so a validly encrypted message with missing or oddly typed fields could still raise KeyError or TypeError in `rmap-initiate`. Added a catch-all that returns the generic 400, and a check in `rmap-get-link` that the link is exactly 32 lowercase hex characters before any file or database row is written. Two new tests cover both routes (13 RMAP route tests pass). After the rebuild: `healthz` reports `db_connected: true`, `rmap_e2e.py` passes, and `rmap_negative.py` passes 6 of 6 with 0 failures (replay still rejected, distinct links still issued). The link format already matched the instructor's note (bare 32 hex, no URL). Instructor test bench result: not recorded yet | `77f5a90` |
 
 ---
