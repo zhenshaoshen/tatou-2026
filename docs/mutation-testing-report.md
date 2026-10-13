@@ -10,11 +10,6 @@ Tests: `server/test/test_redundant_multi_channel.py`
 ## Environment and reproducibility
 
 The recorded campaign used Python 3.13.5 in a virtual environment under `server/.venv`. It was not run in the Python 3.12 Docker environment. The reported score applies to this recorded campaign and its stated test suite.
-
-## Environment and reproducibility
-
-The recorded campaign used Python 3.13.5 in a virtual environment under `server/.venv`. It was not run in the Python 3.12 Docker environment. The reported score applies to this recorded campaign and its stated test suite.
-
 ## Results
 
 | Measure | Initial | Round 1 | Final |
