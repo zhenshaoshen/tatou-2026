@@ -10,6 +10,7 @@ Tests: `server/test/test_redundant_multi_channel.py`
 ## Environment and reproducibility
 
 The recorded campaign used Python 3.13.5 in a virtual environment under `server/.venv`. It was not run in the Python 3.12 Docker environment. The reported score applies to this recorded campaign and its stated test suite.
+
 ## Results
 
 | Measure | Initial | Round 1 | Final |
@@ -20,7 +21,11 @@ The recorded campaign used Python 3.13.5 in a virtual environment under `server/
 | Mutants with no tests | 7 | 7 | 0 |
 | Final mutation score | | | 88.0% |
 
-The final run processed 258 mutants. The focused test suite passed all 28 tests.
+The final run processed 258 mutants (143 killed = 55.4% at the start, 227 = 88.0% at the end). The focused test suite passed all 28 tests.
+
+### Example of a killed mutant
+
+In `_collect`, changing `found += ...` to `found = ...` keeps only the last page's text. The old tests missed it. A new test with the watermark on the first page kills it.
 
 ## What we learned
 
@@ -32,13 +37,30 @@ Examples of surviving mutations included:
 - Changing codec names such as `utf-8` to `UTF-8`.
 - Changing the Latin-1 decoding error handler.
 
-These examples do not all indicate defects. Codec names are case-insensitive in Python, and Latin-1 can decode every byte value, so its error handler is not needed. Position and font-size changes may be equivalent for the properties our tests check. These cases show why survivors need investigation rather than being counted automatically as bugs.
+These examples do not all indicate defects. Codec names are case-insensitive in Python, and Latin-1 can decode every byte value, so its error handler is not needed. Position and font-size changes may be equivalent for the properties our tests check. These cases show why survivors need investigation rather than being counted automatically as bugs. The per-survivor table is in the analysis file linked below.
 
 ## Bugs, weaknesses, and fixes
 
 The main confirmed improvement was to the test suite: channel-isolation tests and stronger assertions now cover behaviors that were previously insufficiently checked. We also corrected the mutmut configuration so the tool can access sibling source modules while mutating only the target file.
 
-No confirmed production defect was established by this campaign. The remaining 31 survivors need to be judged by their actual behavior; some may be equivalent mutations or changes outside the tests' intended contract.
+No confirmed production defect in `rmc` was established by this campaign.
+
+All 31 survivors were judged one by one in `artifacts/kaleemullahmalik/mutation-testing/surviving-mutants-analysis.md`:
+
+| Disposition | Count | Meaning |
+|---|---:|---|
+| Equivalent | 20 | Codec-name case, the Latin-1 error handler, JSON options that do not change the current payload, and an unreachable fallback message |
+| Acceptable behavior change | 3 | Insertion point and font size of the invisible text; exact values are not part of the contract |
+| Unresolved | 8 | The `filetype=` variants passed to PyMuPDF in `add_watermark` and `_collect`; they need a direct check against the installed PyMuPDF and are not claimed to be equivalent |
+
+### Separate defects found in `obj-stream-secret`
+
+These were found by the dedicated tests of `server/src/object_stream_secret.py`, not by mutating `rmc`, and are fixed in commit `566a3c91c95aeb07b3f4eb122b9fc2aabb7ab0f8`:
+
+- The incremental trailer left out `/Root`, the reference to the document catalog. The fix keeps the original reference.
+- An odd-length hex string made `bytes.fromhex()` raise a raw `ValueError`. It is now caught and raised as `SecretNotFoundError("Malformed Tatou watermark object")`.
+
+Two test gaps remain. `test_odd_length_hex_is_rejected_cleanly` accepts three exception types and does not check the message. `test_new_object_number_xref_and_prev_pointer` has no direct `/Root` assertion; the readable-PDF test covers it only indirectly.
 
 ## Limitations
 

@@ -29,8 +29,8 @@ Status: **Covered** (requirement checked by an automated test), **Partial** (che
 | `POST /api/create-watermark[/<id>]` | Creates a watermarked version for the owner's document | `test_ownership_integration.py::test_cross_user_document_ownership_is_enforced` (attacker gets 404); methods tested directly | Integration and unit | Partial: no happy-path API test |
 | `POST /api/read-watermark[/<id>]` | MUST return the secret read in the document | Same cross-user test (404); round trips tested per method | Integration and unit | Partial: no happy-path API test |
 | `GET /api/get-version/<link>` | SHOULD point to a watermarked version specific to the requesting group | `scripts/rmap_e2e.py` (downloads the PDF and reads the mark) | Script | Partial: not in pytest |
-| `POST /api/rmap-initiate` | SHOULD respond only to known identities; all submitted keys MUST be valid identities | `test_rmap_initiate.py`: `test_missing_payload_is_rejected`, `test_non_json_body_is_rejected`, `test_malformed_payload_is_rejected`, `test_unknown_identity_is_rejected`, `test_errors_do_not_reveal_whether_the_identity_is_known`, `test_known_identity_gets_a_usable_response_1` | Unit (real RMAP client, throwaway keys) | Covered |
-| `POST /api/rmap-get-link` | Returns a 32-hex link only after the watermarked copy exists and is recorded | `test_rmap_get_link.py`: `test_missing_payload_is_rejected`, `test_non_json_body_is_rejected`, `test_malformed_payload_is_rejected`, `test_message_2_without_a_matching_session_is_rejected`, `test_errors_do_not_reveal_internals`; scripts: `rmap_e2e.py` (full handshake, link, PDF, mark), `rmap_negative.py` (6 cases: unknown identity, wrong nonceServer, first message 2 accepted, replay rejected, interleaved handshakes, distinct links) | Unit and script | Covered, but replay and distinct-link behaviour are checked only by the script |
+| `POST /api/rmap-initiate` | SHOULD respond only to known identities; all submitted keys MUST be valid identities | `test_rmap_initiate.py`: `test_missing_payload_is_rejected`, `test_non_json_body_is_rejected`, `test_malformed_payload_is_rejected`, `test_valid_encryption_but_wrong_shape_is_a_clean_400`, `test_unknown_identity_is_rejected`, `test_errors_do_not_reveal_whether_the_identity_is_known`, `test_known_identity_gets_a_usable_response_1` | Unit (real RMAP client, throwaway keys) | Covered |
+| `POST /api/rmap-get-link` | Returns a 32-hex link only after the watermarked copy exists and is recorded | `test_rmap_get_link.py`: `test_missing_payload_is_rejected`, `test_non_json_body_is_rejected`, `test_malformed_payload_is_rejected`, `test_valid_encryption_but_wrong_shape_is_a_clean_400`, `test_message_2_without_a_matching_session_is_rejected`, `test_errors_do_not_reveal_internals`; scripts: `rmap_e2e.py` (full handshake, link, PDF, mark), `rmap_negative.py` (6 cases: unknown identity, wrong nonceServer, first message 2 accepted, replay rejected, interleaved handshakes, distinct links) | Unit and script | Covered, but replay and distinct-link behaviour are checked only by the script |
 
 ## 2. Security and configuration requirements
 
@@ -40,6 +40,7 @@ Status: **Covered** (requirement checked by an automated test), **Partial** (che
 | Document ownership enforced (V-05, V-06, V-07) | `test_ownership_integration.py::test_cross_user_document_ownership_is_enforced` (create-watermark, read-watermark) | Integration | Partial: other routes not covered |
 | Upload path cannot be escaped; only PDFs stored | `test_upload_document.py` (see above) | Unit | Covered |
 | RMAP replay of message 2 is rejected (fix `2432649`) | `scripts/rmap_negative.py` | Script | Partial: not in pytest |
+| Operations log records rejected requests too: missing or bad token, failed login (no password logged), traversal and non-PDF uploads, bad RMAP payload (no identity logged), single-line JSON records, unique request ids | `test_audit_log.py`, 17 tests (Specialization D) | Unit | Covered |
 | RMAP errors reveal no internals | `test_rmap_initiate.py::test_errors_do_not_reveal_whether_the_identity_is_known`, `test_rmap_get_link.py::test_errors_do_not_reveal_internals` | Unit | Covered |
 
 ## 3. Watermarking methods (`watermarking_utils.METHODS`)
@@ -56,7 +57,8 @@ Status: **Covered** (requirement checked by an automated test), **Partial** (che
 
 1. **Duplicate test definition fixed.** `test_secret_is_not_stored_as_plaintext` was defined twice in `test_geometric_text_watermark.py`. One duplicate has been removed, and the focused geometric-watermark and redundant-multi-channel tests passed after the change.
 2. **Most API routes have no automated test.** create-user, login, list-documents, list-versions, list-all-versions, get-document and get-watermarking-methods have none, and create/read-watermark and delete have only negative or authentication cases. `server.py` coverage was 41% in the recorded snapshot in `docs/coverage-report.txt` (commit `8655646`); this is historical, not a measurement of the current working tree.
-3. **Integration tests are skipped by default**, so the cross-user ownership check does not run in a plain `pytest`.
+3. **The RMAP routes now return a clean 400 for a validly encrypted message with the wrong shape** (library 2.0.0 hardening, commit `77f5a90`); `test_valid_encryption_but_wrong_shape_is_a_clean_400` in both RMAP test files covers it.
+4. **Integration tests are skipped by default**, so the cross-user ownership check does not run in a plain `pytest`.
 
 ## 5. Planned additions (priority order)
 

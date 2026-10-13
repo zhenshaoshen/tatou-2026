@@ -29,10 +29,15 @@ checks around watermark-channel isolation, malformed payloads, MAC
 validation, error handling, PDF invisibility, and fallback behavior.
 
 ## Confirmed project defects
-This campaign did not establish a confirmed production defect. The primary
-finding was an opportunity to strengthen the tests. Surviving mutants should
-be individually assessed before being classified as defects or equivalent
-mutations.
+This campaign did not establish a confirmed production defect in `rmc`. The
+primary finding was an opportunity to strengthen the tests. All 31 survivors
+were assessed in `surviving-mutants-analysis.md`: 20 equivalent, 3 acceptable
+behavior changes, 8 unresolved (the PyMuPDF `filetype=` variants, not yet
+checked against the installed library).
+
+Separately, the dedicated tests of `obj-stream-secret` found two defects (the
+incremental trailer lacked `/Root`; odd-length hex raised a raw `ValueError`),
+fixed in commit 566a3c9. They are not part of the `rmc` mutation score.
 
 ## Limitations
 The campaign targets one module and its dedicated tests. An 88.0% mutation

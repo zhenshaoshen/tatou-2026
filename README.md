@@ -97,7 +97,7 @@ python -m pytest test/test_redundant_multi_channel.py -q   # 28 tests
 ```
 
 The configuration is in `server/setup.cfg` (target `src/redundant_multi_channel.py`).
-The analysis of the surviving mutants is in `docs/mutation-testing-report.md`.
+The summary is in `docs/mutation-testing-report.md`; the survivor-by-survivor analysis is in `artifacts/kaleemullahmalik/mutation-testing/surviving-mutants-analysis.md`.
 
 ## Tools
 
