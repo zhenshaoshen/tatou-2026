@@ -32,8 +32,8 @@ validation, error handling, PDF invisibility, and fallback behavior.
 This campaign did not establish a confirmed production defect in `rmc`. The
 primary finding was an opportunity to strengthen the tests. All 31 survivors
 were assessed in `surviving-mutants-analysis.md`: 20 equivalent, 3 acceptable
-behavior changes, 8 unresolved (the PyMuPDF `filetype=` variants, not yet
-checked against the installed library).
+behavior changes, 8 equivalent on the tested inputs (the PyMuPDF `filetype=`
+variants, checked in `filetype-experiment.txt`).
 
 Separately, the dedicated tests of `obj-stream-secret` found two defects (the
 incremental trailer lacked `/Root`; odd-length hex raised a raw `ValueError`),

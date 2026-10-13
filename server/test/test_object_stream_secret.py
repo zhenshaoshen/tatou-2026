@@ -108,7 +108,7 @@ def test_non_utf8_plaintext_raises_watermarking_error(method, sample_pdf):
 
 def test_odd_length_hex_is_rejected_cleanly(method, sample_pdf):
     crafted = sample_pdf + b"\n/TatouWM (abc:def)\n"
-    with pytest.raises((SecretNotFoundError, InvalidKeyError, WatermarkingError)):
+    with pytest.raises(SecretNotFoundError, match=r"^Malformed Tatou watermark object$"):
         method.read_secret(crafted, KEY)
 
 
@@ -138,6 +138,8 @@ def test_new_object_number_xref_and_prev_pointer(method, sample_pdf):
     assert tail.startswith(new_obj)
     assert ("/Size %d" % (top + 2)).encode() in tail
     assert ("/Prev %s" % prev).encode() in tail
+    root = re.findall(rb"/Root\s+(\d+)\s+(\d+)\s+R", sample_pdf)[-1]
+    assert b"/Root %s %s R" % root in tail
     xref_pos = int(re.findall(rb"startxref\s+(\d+)\s+%%EOF", marked)[-1])
     xref = marked[xref_pos:]
     assert xref.startswith(b"xref\n%d 1\n" % (top + 1))

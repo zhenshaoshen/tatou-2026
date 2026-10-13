@@ -1,0 +1,30 @@
+warning: The `fitz` API is deprecated and will be removed in future. Use `import pymupdf` instead.
+PyMuPDF 1.28.2
+
+input: valid pdf
+  'pdf' (original)   SAME as pdf  ('opened', 1, 'Hello Tatou', True)
+  None               SAME as pdf  ('opened', 1, 'Hello Tatou', True)
+  omitted            SAME as pdf  ('opened', 1, 'Hello Tatou', True)
+  'PDF'              SAME as pdf  ('opened', 1, 'Hello Tatou', True)
+  'XXpdfXX'          SAME as pdf  ('opened', 1, 'Hello Tatou', True)
+
+input: valid pdf + trailing bytes
+  'pdf' (original)   SAME as pdf  ('opened', 1, 'Hello Tatou', True)
+  None               SAME as pdf  ('opened', 1, 'Hello Tatou', True)
+  omitted            SAME as pdf  ('opened', 1, 'Hello Tatou', True)
+  'PDF'              SAME as pdf  ('opened', 1, 'Hello Tatou', True)
+  'XXpdfXX'          SAME as pdf  ('opened', 1, 'Hello Tatou', True)
+
+input: garbage bytes
+  'pdf' (original)   SAME as pdf  ('raised', 'FileDataError', 'Failed to open stream')
+  None               SAME as pdf  ('raised', 'FileDataError', 'Failed to open stream')
+  omitted            SAME as pdf  ('raised', 'FileDataError', 'Failed to open stream')
+  'PDF'              SAME as pdf  ('raised', 'FileDataError', 'Failed to open stream')
+  'XXpdfXX'          SAME as pdf  ('raised', 'FileDataError', 'Failed to open stream')
+
+input: empty bytes
+  'pdf' (original)   SAME as pdf  ('raised', 'EmptyFileError', 'Cannot open empty stream.')
+  None               SAME as pdf  ('raised', 'EmptyFileError', 'Cannot open empty stream.')
+  omitted            SAME as pdf  ('raised', 'EmptyFileError', 'Cannot open empty stream.')
+  'PDF'              SAME as pdf  ('raised', 'EmptyFileError', 'Cannot open empty stream.')
+  'XXpdfXX'          SAME as pdf  ('raised', 'EmptyFileError', 'Cannot open empty stream.')

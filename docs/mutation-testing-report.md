@@ -13,12 +13,14 @@ The recorded campaign used Python 3.13.5 in a virtual environment under `server/
 
 ## Results
 
-| Measure | Initial | Round 1 | Final |
+| Measure | Initial (`bbd2a79`) | Intermediate (`3691198`) | Final (`badf808`) |
 |---|---:|---:|---:|
-| Tests | 9 | 24 | 28 |
-| Mutants killed | 143 | 217 | 227 |
-| Mutants survived | 108 | 34 | 31 |
+| Tests | 9 | 11 | 28 |
+| Mutants killed | 143 | 148 | 227 |
+| Mutants survived | 108 | 103 | 31 |
 | Mutants with no tests | 7 | 7 | 0 |
+
+The initial and intermediate columns were re-run at those commits on 13 Oct (`mutmut-run-at-*.txt`, `mutmut-results-at-*.txt` in the evidence folder). An earlier draft of this table listed a 24-test round that was never committed or saved, so it was dropped.
 | Final mutation score | | | 88.0% |
 
 The final run processed 258 mutants (143 killed = 55.4% at the start, 227 = 88.0% at the end). The focused test suite passed all 28 tests.
@@ -51,7 +53,7 @@ All 31 survivors were judged one by one in `artifacts/kaleemullahmalik/mutation-
 |---|---:|---|
 | Equivalent | 20 | Codec-name case, the Latin-1 error handler, JSON options that do not change the current payload, and an unreachable fallback message |
 | Acceptable behavior change | 3 | Insertion point and font size of the invisible text; exact values are not part of the contract |
-| Unresolved | 8 | The `filetype=` variants passed to PyMuPDF in `add_watermark` and `_collect`; they need a direct check against the installed PyMuPDF and are not claimed to be equivalent |
+| Equivalent on tested inputs | 8 | The `filetype=` variants passed to PyMuPDF in `add_watermark` and `_collect`: checked on PyMuPDF 1.28.2 with valid, trailing-byte, garbage and empty input, where all behaved like `filetype="pdf"` (`filetype-experiment.txt`); other file types were not tested |
 
 ### Separate defects found in `obj-stream-secret`
 
@@ -60,7 +62,7 @@ These were found by the dedicated tests of `server/src/object_stream_secret.py`,
 - The incremental trailer left out `/Root`, the reference to the document catalog. The fix keeps the original reference.
 - An odd-length hex string made `bytes.fromhex()` raise a raw `ValueError`. It is now caught and raised as `SecretNotFoundError("Malformed Tatou watermark object")`.
 
-Two test gaps remain. `test_odd_length_hex_is_rejected_cleanly` accepts three exception types and does not check the message. `test_new_object_number_xref_and_prev_pointer` has no direct `/Root` assertion; the readable-PDF test covers it only indirectly.
+Two test gaps were found in these tests and are now closed: `test_odd_length_hex_is_rejected_cleanly` expects `SecretNotFoundError` with the exact message, and `test_new_object_number_xref_and_prev_pointer` asserts that the original `/Root` reference appears in the appended trailer.
 
 ## Limitations
 
