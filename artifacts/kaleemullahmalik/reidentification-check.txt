@@ -1,0 +1,8 @@
+dewatermarked/dw_Group_10.pdf  (1,238,012 bytes, 1,238,012 on disk)
+  note   'rmc' at offset 200728 ignored (binary noise, printable context 45%)
+  clean: no text, metadata, trailer, revision or token traces
+dewatermarked/dw_Group_12.pdf  (2,775,366 bytes, 2,775,366 on disk)
+  clean: no text, metadata, trailer, revision or token traces
+dewatermarked/dw_Group_22.pdf  (1,936,569 bytes, 1,936,569 on disk)
+  note   'rmc' at offset 845270 ignored (binary noise, printable context 45%)
+  clean: no text, metadata, trailer, revision or token traces
