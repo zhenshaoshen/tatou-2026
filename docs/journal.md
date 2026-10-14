@@ -219,3 +219,5 @@ flags must be disclosed on the course forum and the flags regenerated.
 - [ ] Re-check flags after any suspected intrusion; regenerate and disclose if leaked.
 - [x] Corrected the defensive-drill row: `audit-evidence/detect-drill.out` records `upload.rejected` but shows no T-07 finding.
 - [ ] Move the `phase-ii` tag to the final commit.
+
+| 2026-10-14 | Read-only SQL verification of flag 3 | Queried `Documents`, `Versions`, and `Users` in MariaDB. Document ID 44 is `flag_3`, stored under the `Mr_Important` path, owned by login `Mr_Important` (`mr_important@example.com`), size 1,776 bytes. The document has zero associated `Versions` records, so this check confirms database presence and ownership only, not a watermark/version record. The `Mr_Important` test-bench scenario remains at its historical 12/12 pass from 2026-10-04; it was not rerun to preserve flag 3. | Read-only SQL; no database changes or scenario rerun. |
