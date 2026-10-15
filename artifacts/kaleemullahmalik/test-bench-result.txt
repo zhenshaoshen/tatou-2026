@@ -1,48 +1,15 @@
-scenarios: ['AllMethodsLifecycle', 'GetDocumentCheck', 'HealthCheck', 'LocalDataConsistent', 'Mr_Important', 'NewUserIsEmpty', 'RealignLocalData', 'RmapHandshake', 'WatermarkLifecycle', 'WatermarkingMethodCount']
-rerun AllMethodsLifecycle -> {'job': 'c880767e096f4c669141600486a657b8'}
-rerun GetDocumentCheck -> {'busy': True, 'error': 'another test run is already in progress', '_http': 409}
-rerun GetDocumentCheck -> {'job': 'd7b63251b35f4bc1ae07377c956a645b'}
-rerun HealthCheck -> {'busy': True, 'error': 'another test run is already in progress', '_http': 409}
-rerun HealthCheck -> {'job': '2afdd6e3fb4b4552b3f6e23fe0bc5157'}
-rerun LocalDataConsistent -> {'busy': True, 'error': 'another test run is already in progress', '_http': 409}
-rerun LocalDataConsistent -> {'job': '0bc197f2ec6d4cefad5e3fc46de7ef88'}
-skipped (flag 3): Mr_Important
-rerun NewUserIsEmpty -> {'busy': True, 'error': 'another test run is already in progress', '_http': 409}
-rerun NewUserIsEmpty -> {'job': '4bccb099de4347f2a3ff5d06302a19b4'}
-rerun RealignLocalData -> {'busy': True, 'error': 'another test run is already in progress', '_http': 409}
-rerun RealignLocalData -> {'job': 'c8bd9aac433c45d2b2a58fa81282d2a6'}
-rerun RmapHandshake -> {'busy': True, 'error': 'an RMAP run is already in progress', '_http': 409}
-rerun RmapHandshake -> {'busy': True, 'error': 'an RMAP run is already in progress', '_http': 409}
-rerun RmapHandshake -> {'busy': True, 'error': 'an RMAP run is already in progress', '_http': 409}
-rerun RmapHandshake -> {'busy': True, 'error': 'an RMAP run is already in progress', '_http': 409}
-rerun RmapHandshake -> {'busy': True, 'error': 'an RMAP run is already in progress', '_http': 409}
-rerun RmapHandshake -> {'busy': True, 'error': 'an RMAP run is already in progress', '_http': 409}
-still busy, stopping
+Instructor test bench, Group_18 (read from the bench API of the Group 36 bench server).
+Final table read 2026-10-15 13:17 (VM local time). Scenarios marked 'rerun' were run again on or after 2026-10-14
+against the deployed server. Mr_Important was not rerun on purpose, so the flag 3 document stays untouched.
 
-run finished 2026-10-14 14:57 (VM local time)
-scenario                   status   checks    finished_at
-AllMethodsLifecycle        passed   118/118    2026-10-14T12:55:33.446+00:00
-GetDocumentCheck           passed   16/16     2026-10-14T12:55:43.143+00:00
-HealthCheck                passed   3/3      2026-10-14T12:55:53.040+00:00
-LocalDataConsistent        passed   91/91     2026-10-14T12:56:03.259+00:00
-Mr_Important               passed   12/12     2026-10-04T23:13:28.575+00:00
-NewUserIsEmpty             passed   14/14     2026-10-14T12:56:13.162+00:00
-RealignLocalData           passed   26/26     2026-10-14T12:56:23.324+00:00
-RmapHandshake              passed   19/19     2026-10-11T20:44:51.804+00:00
-WatermarkLifecycle         passed   41/41     2026-10-04T23:13:35.150+00:00
-WatermarkingMethodCount    failed   6/7      2026-10-04T23:13:36.654+00:00
-rerun WatermarkingMethodCount {'job': '6d22aaa0c5b64c62a450e012dd7a6676'}
-rerun WatermarkLifecycle {'job': '116a8c281483490188eff5d34d64bb24'}
-rerun RmapHandshake {'busy': True, 'error': 'an RMAP run is already in progress', '_http': 409}
-
-run finished 2026-10-14 15:03 (VM local time)
-AllMethodsLifecycle        passed   118/118    2026-10-14T12:55:33.446+00:00
-GetDocumentCheck           passed   16/16     2026-10-14T12:55:43.143+00:00
-HealthCheck                passed   3/3      2026-10-14T12:55:53.040+00:00
-LocalDataConsistent        passed   91/91     2026-10-14T12:56:03.259+00:00
-Mr_Important               passed   12/12     2026-10-04T23:13:28.575+00:00
-NewUserIsEmpty             passed   14/14     2026-10-14T12:56:13.162+00:00
-RealignLocalData           passed   26/26     2026-10-14T12:56:23.324+00:00
-RmapHandshake              passed   19/19     2026-10-11T20:44:51.804+00:00
-WatermarkLifecycle         passed   41/41     2026-10-14T12:58:25.046+00:00
-WatermarkingMethodCount    passed   7/7      2026-10-14T12:58:21.960+00:00
+scenario                   status  checks   last run  
+AllMethodsLifecycle        passed  118/118    2026-10-14  rerun
+GetDocumentCheck           passed  16/16     2026-10-14  rerun
+HealthCheck                passed  3/3      2026-10-14  rerun
+LocalDataConsistent        passed  91/91     2026-10-14  rerun
+Mr_Important               passed  12/12     2026-10-04  earlier run, not rerun
+NewUserIsEmpty             passed  14/14     2026-10-14  rerun
+RealignLocalData           passed  26/26     2026-10-14  rerun
+RmapHandshake              passed  19/19     2026-10-11  earlier run, not rerun
+WatermarkLifecycle         passed  41/41     2026-10-14  rerun
+WatermarkingMethodCount    passed  7/7      2026-10-14  rerun

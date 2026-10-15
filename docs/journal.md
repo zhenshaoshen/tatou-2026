@@ -198,7 +198,7 @@ flags must be disclosed on the course forum and the flags regenerated.
 | 2026-09-24 | flag 1 (container `/app/flag`) | `docker compose exec server cat /app/flag` on the VM | ✅ present, matches ILearn feedback |
 | 2026-09-24 | flag 2 (repo-root `flag`) | `cat flag` in the repository | ✅ present (committed to the public repo, see next row) |
 | 2026-10-10 | flags 1 and 2 | review of the repository | ⚠️ flag 2 value is in the public git history; `entrypoint.sh` printed the flag 1 value to the container logs until it was changed. Rotation pending |
-| — | flag 3 (Mr Important's PDF) | uploaded by the instructor at the end of Phase I | ✅ present  |
+| 2026-10-14 | flag 3 (Mr Important's PDF) | uploaded by the instructor at the end of Phase I; read-only SQL on MariaDB: document 44 is `flag_3`, owned by login `Mr_Important`, 1,776 bytes, no `Versions` rows; the file is present in the server container with the same size. The `Mr_Important` bench scenario stays at its 12/12 pass from 2026-10-04 and was not rerun | ✅ present (database presence and ownership only, content not compared) |
 | — | any leak notification | course forum / course email | none so far |
 
 ---
@@ -215,9 +215,7 @@ flags must be disclosed on the course forum and the flags regenerated.
 ## Open items
 
 - [ ] Rotate flags 1 and 2 together (they hold the same value), stop tracking `server/flag`, and note the rotation here.
-- [ ] Record the result of the re-identification attempts (until 17 Oct).
+- [x] Re-identification: the structural check of our de-watermarked copies of Groups 10, 12 and 22 is clean (`artifacts/kaleemullahmalik/reidentification-check.txt`); whether the owners can still attribute them to us is not known.
 - [ ] Re-check flags after any suspected intrusion; regenerate and disclose if leaked.
 - [x] Corrected the defensive-drill row: `audit-evidence/detect-drill.out` records `upload.rejected` but shows no T-07 finding.
 - [ ] Move the `phase-ii` tag to the final commit.
-
-| 2026-10-14 | Read-only SQL verification of flag 3 | Queried `Documents`, `Versions`, and `Users` in MariaDB. Document ID 44 is `flag_3`, stored under the `Mr_Important` path, owned by login `Mr_Important` (`mr_important@example.com`), size 1,776 bytes. The document has zero associated `Versions` records, so this check confirms database presence and ownership only, not a watermark/version record. The `Mr_Important` test-bench scenario remains at its historical 12/12 pass from 2026-10-04; it was not rerun to preserve flag 3. | Read-only SQL; no database changes or scenario rerun. |
