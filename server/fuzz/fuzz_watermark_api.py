@@ -1,5 +1,6 @@
 """Targeted authenticated fuzzing of Tatou's watermark API JSON boundary."""
 
+import argparse
 import json
 import os
 import sys
@@ -64,7 +65,7 @@ CASES = {
 }
 
 
-def run():
+def run(output_path):
     client = server.app.test_client()
     headers = {"Authorization": f"Bearer {token()}"}
     results = []
@@ -86,10 +87,20 @@ def run():
 
         print(f"{name:15} -> HTTP {response.status_code}")
 
-    output = Path("server/fuzz/api_results.json")
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(results, indent=2), encoding="utf-8")
     print(f"Results: {output}")
 
 
 if __name__ == "__main__":
-    run()
+    parser = argparse.ArgumentParser(
+        description="Fuzz Tatou's watermark creation API JSON boundary."
+    )
+    parser.add_argument(
+        "--output",
+        default="server/fuzz/api_results_latest.json",
+        help="Path for the generated JSON results.",
+    )
+    args = parser.parse_args()
+    run(args.output)

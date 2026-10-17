@@ -1,0 +1,37 @@
+[
+  {
+    "case": "empty_object",
+    "status": 400,
+    "body": "{\"error\":\"method, intended_for, secret, and key are required\"}\n"
+  },
+  {
+    "case": "empty_list",
+    "status": 400,
+    "body": "{\"error\":\"JSON body must be an object\"}\n"
+  },
+  {
+    "case": "nonempty_list",
+    "status": 400,
+    "body": "{\"error\":\"JSON body must be an object\"}\n"
+  },
+  {
+    "case": "string",
+    "status": 400,
+    "body": "{\"error\":\"JSON body must be an object\"}\n"
+  },
+  {
+    "case": "integer",
+    "status": 400,
+    "body": "{\"error\":\"JSON body must be an object\"}\n"
+  },
+  {
+    "case": "boolean",
+    "status": 400,
+    "body": "{\"error\":\"JSON body must be an object\"}\n"
+  },
+  {
+    "case": "null",
+    "status": 400,
+    "body": "{\"error\":\"method, intended_for, secret, and key are required\"}\n"
+  }
+]
