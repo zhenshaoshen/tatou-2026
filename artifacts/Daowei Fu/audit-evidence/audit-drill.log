@@ -1,0 +1,58 @@
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:55:54 +0000] "POST /api/login HTTP/1.1" 401 32 "-" "curl/8.14.1"
+server-1  | {"email": "victim@example.com", "event": "login.failure", "ip": "172.18.0.1", "method": "POST", "path": "/api/login", "request_id": "283cbddbddc7", "ts": "2026-10-11T14:55:54.610+00:00"}
+server-1  | {"email": "victim@example.com", "event": "login.failure", "ip": "172.18.0.1", "method": "POST", "path": "/api/login", "request_id": "0edd65cbb83c", "ts": "2026-10-11T14:55:54.616+00:00"}
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:55:54 +0000] "POST /api/login HTTP/1.1" 401 32 "-" "curl/8.14.1"
+server-1  | {"email": "victim@example.com", "event": "login.failure", "ip": "172.18.0.1", "method": "POST", "path": "/api/login", "request_id": "35d49555955a", "ts": "2026-10-11T14:55:54.621+00:00"}
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:55:54 +0000] "POST /api/login HTTP/1.1" 401 32 "-" "curl/8.14.1"
+server-1  | {"email": "victim@example.com", "event": "login.failure", "ip": "172.18.0.1", "method": "POST", "path": "/api/login", "request_id": "01fe635f6eac", "ts": "2026-10-11T14:55:54.625+00:00"}
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:55:54 +0000] "POST /api/login HTTP/1.1" 401 32 "-" "curl/8.14.1"
+server-1  | {"email": "victim@example.com", "event": "login.failure", "ip": "172.18.0.1", "method": "POST", "path": "/api/login", "request_id": "dc7c7b961d8d", "ts": "2026-10-11T14:55:54.629+00:00"}
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:55:54 +0000] "POST /api/login HTTP/1.1" 401 32 "-" "curl/8.14.1"
+server-1  | {"email": "victim@example.com", "event": "login.failure", "ip": "172.18.0.1", "method": "POST", "path": "/api/login", "request_id": "806952ef74f9", "ts": "2026-10-11T14:55:54.634+00:00"}
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:55:54 +0000] "POST /api/login HTTP/1.1" 401 32 "-" "curl/8.14.1"
+server-1  | {"email": "victim@example.com", "event": "login.failure", "ip": "172.18.0.1", "method": "POST", "path": "/api/login", "request_id": "1a60627f7880", "ts": "2026-10-11T14:55:54.638+00:00"}
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:55:54 +0000] "POST /api/login HTTP/1.1" 401 32 "-" "curl/8.14.1"
+server-1  | {"email": "victim@example.com", "event": "login.failure", "ip": "172.18.0.1", "method": "POST", "path": "/api/login", "request_id": "3e0e1bdedf17", "ts": "2026-10-11T14:55:54.642+00:00"}
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:55:54 +0000] "POST /api/login HTTP/1.1" 401 32 "-" "curl/8.14.1"
+server-1  | {"event": "auth.failure", "ip": "172.18.0.1", "method": "GET", "path": "/api/list-documents", "reason": "bad_signature", "request_id": "a26928fcc703", "ts": "2026-10-11T14:56:00.100+00:00"}
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:56:00 +0000] "GET /api/list-documents HTTP/1.1" 401 26 "-" "curl/8.14.1"
+server-1  | {"event": "auth.failure", "ip": "172.18.0.1", "method": "GET", "path": "/api/get-document/1", "reason": "bad_signature", "request_id": "7d24c6ba3447", "ts": "2026-10-11T14:56:00.105+00:00"}
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:56:00 +0000] "GET /api/get-document/1 HTTP/1.1" 401 26 "-" "curl/8.14.1"
+server-1  | {"event": "auth.failure", "ip": "172.18.0.1", "method": "GET", "path": "/api/list-versions", "reason": "bad_signature", "request_id": "279940fc095a", "ts": "2026-10-11T14:56:00.109+00:00"}
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:56:00 +0000] "GET /api/list-versions HTTP/1.1" 401 26 "-" "curl/8.14.1"
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:56:00 +0000] "GET /api/create-watermark HTTP/1.1" 404 207 "-" "curl/8.14.1"
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:56:00 +0000] "GET /api/read-watermark HTTP/1.1" 404 207 "-" "curl/8.14.1"
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:56:00 +0000] "GET /api/delete-document/1 HTTP/1.1" 404 207 "-" "curl/8.14.1"
+server-1  | {"event": "auth.failure", "ip": "172.18.0.1", "method": "GET", "path": "/api/list-all-versions", "reason": "bad_signature", "request_id": "2bc788ed904f", "ts": "2026-10-11T14:56:00.125+00:00"}
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:56:00 +0000] "GET /api/list-all-versions HTTP/1.1" 401 26 "-" "curl/8.14.1"
+server-1  | {"event": "auth.failure", "ip": "172.18.0.1", "method": "GET", "path": "/api/get-document/2", "reason": "bad_signature", "request_id": "79b4c282980b", "ts": "2026-10-11T14:56:00.129+00:00"}
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:56:00 +0000] "GET /api/get-document/2 HTTP/1.1" 401 26 "-" "curl/8.14.1"
+server-1  | {"event": "rmap.initiate.rejected", "ip": "172.18.0.1", "method": "POST", "path": "/api/rmap-initiate", "reason": "protocol_error", "request_id": "914b6c6199b3", "ts": "2026-10-11T14:56:06.213+00:00"}
+server-1  | [2026-10-11 14:56:06,214] WARNING in server: RMAP initiate rejected: Could not parse PGP message: <class 'pgpy.packet.types.Opaque'>
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:56:06 +0000] "POST /api/rmap-initiate HTTP/1.1" 400 28 "-" "curl/8.14.1"
+server-1  | {"event": "rmap.initiate.rejected", "ip": "172.18.0.1", "method": "POST", "path": "/api/rmap-initiate", "reason": "protocol_error", "request_id": "a3771b72aa2a", "ts": "2026-10-11T14:56:06.218+00:00"}
+server-1  | [2026-10-11 14:56:06,218] WARNING in server: RMAP initiate rejected: Could not parse PGP message: <class 'pgpy.packet.types.Opaque'>
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:56:06 +0000] "POST /api/rmap-initiate HTTP/1.1" 400 28 "-" "curl/8.14.1"
+server-1  | {"event": "rmap.initiate.rejected", "ip": "172.18.0.1", "method": "POST", "path": "/api/rmap-initiate", "reason": "protocol_error", "request_id": "4f34015bfb52", "ts": "2026-10-11T14:56:06.222+00:00"}
+server-1  | [2026-10-11 14:56:06,222] WARNING in server: RMAP initiate rejected: Could not parse PGP message: <class 'pgpy.packet.types.Opaque'>
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:56:06 +0000] "POST /api/rmap-initiate HTTP/1.1" 400 28 "-" "curl/8.14.1"
+server-1  | {"event": "rmap.initiate.rejected", "ip": "172.18.0.1", "method": "POST", "path": "/api/rmap-initiate", "reason": "protocol_error", "request_id": "e112aa3fa4e7", "ts": "2026-10-11T14:56:06.226+00:00"}
+server-1  | [2026-10-11 14:56:06,226] WARNING in server: RMAP initiate rejected: Could not parse PGP message: <class 'pgpy.packet.types.Opaque'>
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:56:06 +0000] "POST /api/rmap-initiate HTTP/1.1" 400 28 "-" "curl/8.14.1"
+server-1  | {"event": "rmap.initiate.rejected", "ip": "172.18.0.1", "method": "POST", "path": "/api/rmap-initiate", "reason": "protocol_error", "request_id": "6d72d9ffaa1e", "ts": "2026-10-11T14:56:06.230+00:00"}
+server-1  | [2026-10-11 14:56:06,230] WARNING in server: RMAP initiate rejected: Could not parse PGP message: <class 'pgpy.packet.types.Opaque'>
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:56:06 +0000] "POST /api/rmap-initiate HTTP/1.1" 400 28 "-" "curl/8.14.1"
+server-1  | {"event": "rmap.initiate.rejected", "ip": "172.18.0.1", "method": "POST", "path": "/api/rmap-initiate", "reason": "protocol_error", "request_id": "6f6f40ee206c", "ts": "2026-10-11T14:56:06.234+00:00"}
+server-1  | [2026-10-11 14:56:06,234] WARNING in server: RMAP initiate rejected: Could not parse PGP message: <class 'pgpy.packet.types.Opaque'>
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:56:06 +0000] "POST /api/rmap-initiate HTTP/1.1" 400 28 "-" "curl/8.14.1"
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:57:57 +0000] "POST /api/create-user HTTP/1.1" 201 54 "-" "curl/8.14.1"
+server-1  | {"event": "login.success", "ip": "172.18.0.1", "login": "drill", "method": "POST", "path": "/api/login", "request_id": "8403a1558f9b", "ts": "2026-10-11T14:58:01.616+00:00", "uid": 90}
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:58:01 +0000] "POST /api/login HTTP/1.1" 200 161 "-" "curl/8.14.1"
+server-1  | {"event": "upload.normalised", "ip": "172.18.0.1", "method": "POST", "path": "/api/upload-document", "raw_filename": "../../evil1.pkl", "request_id": "39ae858ac6e0", "stored_as": "evil1.pkl", "ts": "2026-10-11T14:58:05.654+00:00"}
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:58:05 +0000] "POST /api/upload-document HTTP/1.1" 201 154 "-" "curl/8.14.1"
+server-1  | {"event": "upload.normalised", "ip": "172.18.0.1", "method": "POST", "path": "/api/upload-document", "raw_filename": "../../evil2.pkl", "request_id": "e6809d01d181", "stored_as": "evil2.pkl", "ts": "2026-10-11T14:58:05.664+00:00"}
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:58:05 +0000] "POST /api/upload-document HTTP/1.1" 201 154 "-" "curl/8.14.1"
+server-1  | {"event": "upload.normalised", "ip": "172.18.0.1", "method": "POST", "path": "/api/upload-document", "raw_filename": "../../evil3.pkl", "request_id": "17cfe06b6a9c", "stored_as": "evil3.pkl", "ts": "2026-10-11T14:58:05.671+00:00"}
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:58:05 +0000] "POST /api/upload-document HTTP/1.1" 201 154 "-" "curl/8.14.1"
+server-1  | {"event": "upload.rejected", "ip": "172.18.0.1", "method": "POST", "path": "/api/upload-document", "raw_filename": "notapdf.pdf", "reason": "not_a_pdf", "request_id": "2f61093eb245", "ts": "2026-10-11T14:58:09.743+00:00"}
+server-1  | 172.18.0.1 - - [11/Oct/2026:14:58:09 +0000] "POST /api/upload-document HTTP/1.1" 400 40 "-" "curl/8.14.1"

@@ -1,0 +1,15 @@
+--- event counts ---
+  auth.failure                 5
+  login.failure                8
+  login.success                1
+  rmap.initiate.rejected       6
+  upload.normalised            3
+  upload.rejected              1
+
+FINDING  [T-10] 5 failed logins from 172.18.0.1 in 19 ms (machine speed) (14:55:54-14:55:54), 8 total - likely password spraying
+FINDING  [T-01] 5 authentication failures from 172.18.0.1 in 29 ms (machine speed), 5 total - token forging or endpoint enumeration
+FINDING  [T-06] 3 uploads from 172.18.0.1 in 17 ms (machine speed) had their filename rewritten by secure_filename, 3 total - path-shaped names supplied
+FINDING  [T-22] 5 RMAP failures from 172.18.0.1 in 17 ms (machine speed), 6 total - replay, identity probing, or forced watermarking runs
+FINDING  [T-01] burst of 5 auth failures from 172.18.0.1 across 5 paths in 29 ms (machine speed) - automated scanning
+
+5 finding(s) across 24 audit events
