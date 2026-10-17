@@ -1,0 +1,121 @@
+[
+  {
+    "method": "geo-text",
+    "dimension": "secret",
+    "case": "secret_0",
+    "outcome": "exception",
+    "detail": "ValueError('Secret must be a non-empty string')"
+  },
+  {
+    "method": "geo-text",
+    "dimension": "secret",
+    "case": "secret_1",
+    "outcome": "accepted",
+    "detail": "output_bytes=24857"
+  },
+  {
+    "method": "geo-text",
+    "dimension": "secret",
+    "case": "secret_2",
+    "outcome": "accepted",
+    "detail": "output_bytes=37167"
+  },
+  {
+    "method": "geo-text",
+    "dimension": "secret",
+    "case": "secret_3",
+    "outcome": "accepted",
+    "detail": "output_bytes=38399"
+  },
+  {
+    "method": "geo-text",
+    "dimension": "secret",
+    "case": "secret_4",
+    "outcome": "accepted",
+    "detail": "output_bytes=72865"
+  },
+  {
+    "method": "geo-text",
+    "dimension": "secret",
+    "case": "secret_5",
+    "outcome": "exception",
+    "detail": "WatermarkingError('PDF page does not have enough geometric watermark capacity')"
+  },
+  {
+    "method": "geo-text",
+    "dimension": "key",
+    "case": "key_0",
+    "outcome": "exception",
+    "detail": "ValueError('Key must be a non-empty string')"
+  },
+  {
+    "method": "geo-text",
+    "dimension": "key",
+    "case": "key_1",
+    "outcome": "accepted",
+    "detail": "output_bytes=37167"
+  },
+  {
+    "method": "geo-text",
+    "dimension": "key",
+    "case": "key_2",
+    "outcome": "accepted",
+    "detail": "output_bytes=37167"
+  },
+  {
+    "method": "geo-text",
+    "dimension": "key",
+    "case": "key_3",
+    "outcome": "accepted",
+    "detail": "output_bytes=37167"
+  },
+  {
+    "method": "geo-text",
+    "dimension": "key",
+    "case": "key_4",
+    "outcome": "accepted",
+    "detail": "output_bytes=37167"
+  },
+  {
+    "method": "geo-text",
+    "dimension": "pdf",
+    "case": "minimal_pdf",
+    "outcome": "rejected",
+    "detail": "not applicable"
+  },
+  {
+    "method": "geo-text",
+    "dimension": "pdf",
+    "case": "empty",
+    "outcome": "exception",
+    "detail": "ValueError('Input does not look like a valid PDF (missing %PDF header)')"
+  },
+  {
+    "method": "geo-text",
+    "dimension": "pdf",
+    "case": "plain_text",
+    "outcome": "exception",
+    "detail": "ValueError('Input does not look like a valid PDF (missing %PDF header)')"
+  },
+  {
+    "method": "geo-text",
+    "dimension": "pdf",
+    "case": "header_only",
+    "outcome": "rejected",
+    "detail": "not applicable"
+  },
+  {
+    "method": "geo-text",
+    "dimension": "pdf",
+    "case": "truncated_pdf",
+    "outcome": "rejected",
+    "detail": "not applicable"
+  },
+  {
+    "method": "geo-text",
+    "dimension": "pdf",
+    "case": "pdf_header_garbage",
+    "outcome": "rejected",
+    "detail": "not applicable"
+  }
+]

@@ -841,19 +841,19 @@ def create_app():
     @app.post("/api/create-watermark/<int:document_id>")
     @require_auth
     def create_watermark(document_id: int | None = None):
-        # accept id from path, query (?id= / ?documentid=), or JSON body on GET
+        payload = request.get_json(silent=True)
+        if payload is None:
+            payload = {}
+        elif not isinstance(payload, dict):
+            return jsonify({"error": "JSON body must be an object"}), 400
+        # Accept document ID from URL path, query parameters, or JSON body.
         if not document_id:
             document_id = (
                 request.args.get("id")
                 or request.args.get("documentid")
-                or (request.is_json and (request.get_json(silent=True) or {}).get("id"))
+                or payload.get("id")
             )
-        try:
-            doc_id = document_id
-        except (TypeError, ValueError):
-            return jsonify({"error": "document id required"}), 400
-            
-        payload = request.get_json(silent=True) or {}
+        doc_id = document_id
         # allow a couple of aliases for convenience
         method = payload.get("method")
         intended_for = payload.get("intended_for")
