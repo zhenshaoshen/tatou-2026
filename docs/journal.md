@@ -216,7 +216,7 @@ flags must be disclosed on the course forum and the flags regenerated.
 
 ## Open items
 
-- [ ] Rotate flags 1 and 2 together (they hold the same value), stop tracking `server/flag`, and note the rotation here.
+- [x] Rotated flags 1 and 2 (new value in commit `2730541`, 2026-10-17); `server/flag` is untracked (see `.gitignore`).
 - [x] Re-identification: the structural check of our de-watermarked copies of Groups 10, 12 and 22 is clean (`artifacts/kaleemullahmalik/reidentification-check.txt`); whether the owners can still attribute them to us is not known.
 - [ ] Re-check flags after any suspected intrusion; regenerate and disclose if leaked.
 - [x] Corrected the defensive-drill row: `audit-evidence/detect-drill.out` records `upload.rejected` but shows no T-07 finding.
